@@ -381,6 +381,129 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
   max-width: 320px;
 }
 @keyframes toastIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+/* ── 관리자 패널 ── */
+.admin-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+.admin-overlay.open { display: flex; }
+.admin-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  width: min(780px, 96vw);
+  max-height: 88vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0,0,0,.25);
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn { from { opacity:0; transform:scale(.97) translateY(10px); } to { opacity:1; transform:none; } }
+.admin-header {
+  padding: 18px 24px 0;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.admin-header h2 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.admin-close {
+  background: none; border: none; font-size: 20px; cursor: pointer;
+  color: var(--text3); padding: 4px 8px; border-radius: 6px;
+  transition: background .12s, color .12s;
+}
+.admin-close:hover { background: var(--red-bg); color: var(--red); }
+.admin-tabs {
+  display: flex; gap: 2px; padding: 16px 24px 0; flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+.atab {
+  padding: 8px 16px; border: none; background: none;
+  font-family: var(--sans); font-size: 13px; font-weight: 500;
+  color: var(--text3); cursor: pointer; border-radius: 7px 7px 0 0;
+  border-bottom: 2px solid transparent;
+  transition: all .12s;
+}
+.atab:hover { color: var(--text); background: var(--surface2); }
+.atab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--surface2); }
+.admin-body {
+  flex: 1; overflow-y: auto; padding: 20px 24px;
+}
+.apanel { display: none; }
+.apanel.active { display: block; }
+.agroup { margin-bottom: 22px; }
+.agroup-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 10px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.arow { display: grid; grid-template-columns: 160px 1fr; gap: 12px; align-items: center; margin-bottom: 10px; }
+.arow label { font-size: 13px; color: var(--text2); font-weight: 500; }
+.arow input[type="text"],
+.arow input[type="number"],
+.arow select {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 8px 11px;
+  font-size: 13px; font-family: var(--sans); color: var(--text);
+  outline: none; transition: border-color .12s;
+}
+.arow input:focus, .arow select:focus { border-color: var(--accent); }
+.arow input[type="color"] {
+  width: 100%; height: 38px; border: 1px solid var(--border);
+  border-radius: 7px; cursor: pointer; padding: 2px 4px;
+  background: var(--surface2);
+}
+.color-pair { display: grid; grid-template-columns: 1fr 42px; gap: 8px; align-items: center; }
+.color-pair input[type="text"] { font-family: var(--mono); font-size: 12px; }
+.color-pair input[type="color"] { width: 42px; height: 38px; flex-shrink: 0; }
+.font-preview {
+  font-size: 13px; color: var(--text2); padding: 6px 10px;
+  background: var(--surface2); border-radius: 6px; margin-top: 6px;
+}
+.admin-footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0; gap: 10px;
+}
+.admin-footer .hint { font-size: 11px; color: var(--text3); }
+.afooter-btns { display: flex; gap: 8px; }
+/* 비밀번호 화면 */
+.admin-pw-screen {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 16px; padding: 48px 24px;
+  text-align: center;
+}
+.admin-pw-screen .lock-icon { font-size: 40px; margin-bottom: 4px; }
+.admin-pw-screen h3 { font-size: 16px; font-weight: 700; }
+.admin-pw-screen p { font-size: 13px; color: var(--text3); }
+.pw-input-row { display: flex; gap: 8px; margin-top: 4px; }
+.pw-input-row input {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 16px; font-size: 15px;
+  font-family: var(--mono); color: var(--text); outline: none;
+  width: 200px; text-align: center; letter-spacing: 4px;
+  transition: border-color .12s;
+}
+.pw-input-row input:focus { border-color: var(--accent); }
+.pw-input-row input.pw-error { border-color: var(--red); animation: shake .3s ease; }
+@keyframes shake {
+  0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
+}
+.pw-error-msg { font-size: 12px; color: var(--red); min-height: 16px; }
+.change-pw-link {
+  font-size: 12px; color: var(--accent); text-decoration: underline;
+  cursor: pointer; background: none; border: none; margin-top: 8px;
+}
+/* 헤더 관리자 버튼 */
+.hbtn-admin {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.15);
+  color: rgba(255,255,255,.6);
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  font-size: 14px; transition: all .15s;
+}
+.hbtn-admin:hover { background: rgba(255,255,255,.18); color: #fff; }
 /* ── 모바일 ── */
 @media (max-width: 860px) {
   .layout { grid-template-columns: 1fr; }
@@ -402,10 +525,242 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
     <span class="ver">v3.5 BOSS</span>
   </div>
   <div class="header-actions">
+    <button class="hbtn-admin" onclick="openAdmin()" title="관리자 설정">⚙️</button>
     <button class="hbtn" onclick="toggleTheme()" id="theme-btn">🌙 다크모드</button>
     <button class="hbtn" onclick="resetForm()">↺ 초기화</button>
   </div>
 </header>
+
+<!-- ══════════════ 관리자 패널 모달 ══════════════ -->
+<div class="admin-overlay" id="admin-overlay" onclick="overlayClick(event)">
+  <div class="admin-modal" id="admin-modal">
+
+    <!-- 비밀번호 화면 -->
+    <div id="admin-pw-screen" class="admin-pw-screen">
+      <div class="lock-icon">🔐</div>
+      <h3>관리자 인증</h3>
+      <p>설정을 변경하려면 관리자 비밀번호를 입력하세요.</p>
+      <div class="pw-input-row">
+        <input type="password" id="pw-input" placeholder="••••••" maxlength="20"
+          onkeydown="if(event.key==='Enter') checkPw()">
+        <button class="btn btn-primary" style="width:auto;padding:10px 18px" onclick="checkPw()">확인</button>
+      </div>
+      <div class="pw-error-msg" id="pw-error"></div>
+      <button class="change-pw-link" onclick="showChangePw()">비밀번호 변경</button>
+    </div>
+
+    <!-- 비밀번호 변경 화면 -->
+    <div id="admin-changepw-screen" class="admin-pw-screen" style="display:none">
+      <div class="lock-icon">🔑</div>
+      <h3>비밀번호 변경</h3>
+      <p>현재 비밀번호를 입력하고 새 비밀번호를 설정하세요.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;width:260px">
+        <input type="password" id="cpw-current" placeholder="현재 비밀번호"
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:14px;font-family:var(--sans);color:var(--text);outline:none;width:100%">
+        <input type="password" id="cpw-new" placeholder="새 비밀번호"
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:14px;font-family:var(--sans);color:var(--text);outline:none;width:100%">
+        <input type="password" id="cpw-confirm" placeholder="새 비밀번호 확인"
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:14px;font-family:var(--sans);color:var(--text);outline:none;width:100%">
+        <div class="pw-error-msg" id="cpw-error"></div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn btn-secondary" style="flex:1" onclick="showPwScreen()">← 취소</button>
+          <button class="btn btn-primary" style="flex:1" onclick="doChangePw()">변경 저장</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 설정 화면 (로그인 후) -->
+    <div id="admin-settings-screen" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+      <div class="admin-header">
+        <h2>⚙️ 관리자 설정</h2>
+        <button class="admin-close" onclick="closeAdmin()">✕</button>
+      </div>
+      <div class="admin-tabs">
+        <button class="atab active" onclick="switchTab('design')" id="tab-design">🎨 디자인</button>
+        <button class="atab" onclick="switchTab('text')" id="tab-text">✏️ 텍스트</button>
+        <button class="atab" onclick="switchTab('calc')" id="tab-calc">🧮 계산 설정</button>
+        <button class="atab" onclick="switchTab('layout')" id="tab-layout">📐 레이아웃</button>
+      </div>
+      <div class="admin-body">
+
+        <!-- 디자인 탭 -->
+        <div class="apanel active" id="panel-design">
+          <div class="agroup">
+            <div class="agroup-title">주요 색상</div>
+            <div class="arow"><label>헤더 / 강조색</label>
+              <div class="color-pair">
+                <input type="text" id="c-accent" oninput="syncColor('c-accent','cp-accent')">
+                <input type="color" id="cp-accent" oninput="syncColor('cp-accent','c-accent')">
+              </div>
+            </div>
+            <div class="arow"><label>강조색 (호버)</label>
+              <div class="color-pair">
+                <input type="text" id="c-accent2" oninput="syncColor('c-accent2','cp-accent2')">
+                <input type="color" id="cp-accent2" oninput="syncColor('cp-accent2','c-accent2')">
+              </div>
+            </div>
+            <div class="arow"><label>배경색</label>
+              <div class="color-pair">
+                <input type="text" id="c-bg" oninput="syncColor('c-bg','cp-bg')">
+                <input type="color" id="cp-bg" oninput="syncColor('cp-bg','c-bg')">
+              </div>
+            </div>
+            <div class="arow"><label>카드 배경</label>
+              <div class="color-pair">
+                <input type="text" id="c-surface" oninput="syncColor('c-surface','cp-surface')">
+                <input type="color" id="cp-surface" oninput="syncColor('cp-surface','c-surface')">
+              </div>
+            </div>
+          </div>
+          <div class="agroup">
+            <div class="agroup-title">폰트</div>
+            <div class="arow">
+              <label>본문 폰트</label>
+              <select id="font-body" onchange="previewFont()">
+                <option value="'Noto Sans KR', sans-serif">Noto Sans KR (기본)</option>
+                <option value="'Malgun Gothic', sans-serif">맑은 고딕</option>
+                <option value="'Apple SD Gothic Neo', sans-serif">Apple SD Gothic Neo</option>
+                <option value="'NanumGothic', sans-serif">나눔고딕</option>
+                <option value="'NanumMyeongjo', serif">나눔명조</option>
+              </select>
+            </div>
+            <div class="font-preview" id="font-preview-box">
+              가나다라 ABC 123 — 근로계약 및 퇴직금 산출기
+            </div>
+          </div>
+          <div class="agroup">
+            <div class="agroup-title">모서리 / 크기</div>
+            <div class="arow">
+              <label>카드 모서리 (px)</label>
+              <input type="number" id="border-radius" min="0" max="24" value="10"
+                oninput="liveApply()">
+            </div>
+            <div class="arow">
+              <label>기본 글자 크기 (px)</label>
+              <input type="number" id="base-fontsize" min="12" max="18" value="14"
+                oninput="liveApply()">
+            </div>
+          </div>
+        </div>
+
+        <!-- 텍스트 탭 -->
+        <div class="apanel" id="panel-text">
+          <div class="agroup">
+            <div class="agroup-title">앱 기본 텍스트</div>
+            <div class="arow"><label>앱 제목</label>
+              <input type="text" id="txt-title" value="근로계약 및 퇴직금 산출기">
+            </div>
+            <div class="arow"><label>버전 뱃지</label>
+              <input type="text" id="txt-ver" value="v3.5 BOSS">
+            </div>
+            <div class="arow"><label>PDF 워터마크</label>
+              <input type="text" id="txt-watermark" value="계산 엔진: v3.5 Boss Edition">
+            </div>
+          </div>
+          <div class="agroup">
+            <div class="agroup-title">입력 패널 레이블</div>
+            <div class="arow"><label>기본 계약 정보 카드 제목</label>
+              <input type="text" id="txt-card1" value="📋 기본 계약 정보">
+            </div>
+            <div class="arow"><label>기간별 조건 카드 제목</label>
+              <input type="text" id="txt-card2" value="⚙️ 기간별 조건">
+            </div>
+            <div class="arow"><label>실행 버튼 텍스트</label>
+              <input type="text" id="txt-runbtn" value="▶ 정밀 산출 실행">
+            </div>
+          </div>
+        </div>
+
+        <!-- 계산 설정 탭 -->
+        <div class="apanel" id="panel-calc">
+          <div class="agroup">
+            <div class="agroup-title">퇴직금 반올림 기본값</div>
+            <div class="arow"><label>기본 단위</label>
+              <select id="def-rnd-unit">
+                <option value="1">1원</option>
+                <option value="10" selected>10원 (기본)</option>
+                <option value="100">100원</option>
+                <option value="1000">1,000원</option>
+              </select>
+            </div>
+            <div class="arow"><label>기본 방향</label>
+              <select id="def-rnd-dir">
+                <option value="올림" selected>올림 ↑</option>
+                <option value="버림">버림 ↓</option>
+              </select>
+            </div>
+          </div>
+          <div class="agroup">
+            <div class="agroup-title">조건 입력 기본값</div>
+            <div class="arow"><label>기본 비율 (%)</label>
+              <input type="number" id="def-ratio" min="1" max="200" value="100">
+            </div>
+            <div class="arow"><label>기본 주재비 (만원)</label>
+              <input type="number" id="def-allowance" min="0" value="0">
+            </div>
+          </div>
+          <div class="agroup">
+            <div class="agroup-title">급여 계산 공식</div>
+            <div class="arow"><label>월급 반올림 단위 (원)</label>
+              <select id="def-salary-unit">
+                <option value="10">10원</option>
+                <option value="100">100원</option>
+                <option value="1000" selected>1,000원 (기본)</option>
+              </select>
+            </div>
+            <div class="arow"><label>퇴직금 적립 분모</label>
+              <select id="def-sev-denom">
+                <option value="12">12개월</option>
+                <option value="13" selected>13개월 (기본)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 레이아웃 탭 -->
+        <div class="apanel" id="panel-layout">
+          <div class="agroup">
+            <div class="agroup-title">패널 구성</div>
+            <div class="arow"><label>왼쪽 패널 너비 (px)</label>
+              <input type="number" id="layout-left-width" min="300" max="600" value="380"
+                oninput="liveApply()">
+            </div>
+            <div class="arow"><label>결과 영역 여백 (px)</label>
+              <input type="number" id="layout-result-pad" min="12" max="60" value="28"
+                oninput="liveApply()">
+            </div>
+          </div>
+          <div class="agroup">
+            <div class="agroup-title">결과 표시</div>
+            <div class="arow"><label>월별 행 높이</label>
+              <select id="layout-density">
+                <option value="compact">조밀 (compact)</option>
+                <option value="normal" selected>보통 (normal)</option>
+                <option value="loose">여유 (loose)</option>
+              </select>
+            </div>
+            <div class="arow"><label>헤더 고정 (sticky)</label>
+              <select id="layout-sticky">
+                <option value="sticky" selected>고정</option>
+                <option value="relative">고정 안 함</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /admin-body -->
+      <div class="admin-footer">
+        <span class="hint" id="admin-save-hint">변경사항은 브라우저에 저장됩니다.</span>
+        <div class="afooter-btns">
+          <button class="btn btn-secondary" onclick="resetAdminSettings()">기본값 초기화</button>
+          <button class="btn btn-secondary" onclick="showChangePw()">🔑 비밀번호 변경</button>
+          <button class="btn btn-primary" style="width:auto;padding:10px 22px" onclick="saveAdminSettings()">💾 저장 및 적용</button>
+        </div>
+      </div>
+    </div><!-- /admin-settings-screen -->
+
+  </div><!-- /admin-modal -->
+</div><!-- /admin-overlay -->
 
 <div class="layout">
   <!-- ── 왼쪽 입력 패널 ── -->
@@ -1189,9 +1544,294 @@ function toast(msg) {
   toastTimer = setTimeout(() => t.remove(), 3000);
 }
 
+
 // ════════════════════════════════════════════
-// 반올림 미리보기
+// 관리자 패널
 // ════════════════════════════════════════════
+const ADMIN_CFG_KEY = 'salary_admin_cfg_v35';
+const DEFAULT_PW_HASH = '9f86d081884c7d659a2feaa0c55ad015'; // "test" — MD5, 첫 실행 시 변경 권장
+const PW_HASH_KEY = 'salary_admin_pw_hash';
+
+// 단순 해시 (보안보다 편의 목적 — 소스에 노출되는 구조임을 인지)
+async function hashPw(pw) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function getStoredHash() {
+  return localStorage.getItem(PW_HASH_KEY) || DEFAULT_PW_HASH;
+}
+
+function openAdmin() {
+  document.getElementById('admin-overlay').classList.add('open');
+  showPwScreen();
+  setTimeout(() => document.getElementById('pw-input')?.focus(), 100);
+}
+
+function closeAdmin() {
+  document.getElementById('admin-overlay').classList.remove('open');
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('admin-overlay')) closeAdmin();
+}
+
+function showPwScreen() {
+  document.getElementById('admin-pw-screen').style.display = 'flex';
+  document.getElementById('admin-changepw-screen').style.display = 'none';
+  document.getElementById('admin-settings-screen').style.display = 'none';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-error').textContent = '';
+}
+
+function showChangePw() {
+  document.getElementById('admin-pw-screen').style.display = 'none';
+  document.getElementById('admin-changepw-screen').style.display = 'flex';
+  document.getElementById('admin-settings-screen').style.display = 'none';
+  ['cpw-current','cpw-new','cpw-confirm'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cpw-error').textContent = '';
+}
+
+async function checkPw() {
+  const pw = document.getElementById('pw-input').value;
+  const h  = await hashPw(pw);
+  const stored = getStoredHash();
+  // DEFAULT_PW_HASH는 MD5("test") — SHA-256("test")와 다름, 최초엔 항상 변경 유도
+  const ok = (h === stored) || (pw === 'test' && stored === DEFAULT_PW_HASH);
+  if (ok) {
+    document.getElementById('admin-pw-screen').style.display = 'none';
+    document.getElementById('admin-settings-screen').style.display = 'flex';
+    loadAdminSettingsToUI();
+  } else {
+    const el = document.getElementById('pw-input');
+    el.classList.add('pw-error');
+    document.getElementById('pw-error').textContent = '비밀번호가 올바르지 않습니다.';
+    setTimeout(() => el.classList.remove('pw-error'), 400);
+    el.value = '';
+    el.focus();
+  }
+}
+
+async function doChangePw() {
+  const cur     = document.getElementById('cpw-current').value;
+  const nw      = document.getElementById('cpw-new').value;
+  const confirm = document.getElementById('cpw-confirm').value;
+  const errEl   = document.getElementById('cpw-error');
+
+  if (!nw || nw.length < 4) { errEl.textContent = '새 비밀번호는 4자 이상이어야 합니다.'; return; }
+  if (nw !== confirm)         { errEl.textContent = '새 비밀번호가 일치하지 않습니다.'; return; }
+
+  const curHash = await hashPw(cur);
+  const stored  = getStoredHash();
+  const curOk   = (curHash === stored) || (cur === 'test' && stored === DEFAULT_PW_HASH);
+  if (!curOk) { errEl.textContent = '현재 비밀번호가 올바르지 않습니다.'; return; }
+
+  const newHash = await hashPw(nw);
+  localStorage.setItem(PW_HASH_KEY, newHash);
+  toast('✅ 비밀번호가 변경됐습니다.');
+  document.getElementById('admin-pw-screen').style.display = 'none';
+  document.getElementById('admin-changepw-screen').style.display = 'none';
+  document.getElementById('admin-settings-screen').style.display = 'flex';
+  loadAdminSettingsToUI();
+}
+
+function switchTab(name) {
+  ['design','text','calc','layout'].forEach(t => {
+    document.getElementById('tab-'+t)?.classList.toggle('active', t===name);
+    document.getElementById('panel-'+t)?.classList.toggle('active', t===name);
+  });
+}
+
+// ── 설정 기본값 ──
+const ADMIN_DEFAULTS = {
+  accentColor:    '#1a3a5c',
+  accentColor2:   '#2d5f8a',
+  bgColor:        '#f5f4f0',
+  surfaceColor:   '#ffffff',
+  fontBody:       "'Noto Sans KR', sans-serif",
+  borderRadius:   10,
+  baseFontSize:   14,
+  txtTitle:       '근로계약 및 퇴직금 산출기',
+  txtVer:         'v3.5 BOSS',
+  txtWatermark:   '계산 엔진: v3.5 Boss Edition',
+  txtCard1:       '📋 기본 계약 정보',
+  txtCard2:       '⚙️ 기간별 조건',
+  txtRunBtn:      '▶ 정밀 산출 실행',
+  defRndUnit:     '10',
+  defRndDir:      '올림',
+  defRatio:       100,
+  defAllowance:   0,
+  defSalaryUnit:  1000,
+  defSevDenom:    13,
+  layoutLeftWidth: 380,
+  layoutResultPad: 28,
+  layoutDensity:  'normal',
+  layoutSticky:   'sticky',
+};
+
+function loadAdminCfg() {
+  try { return { ...ADMIN_DEFAULTS, ...JSON.parse(localStorage.getItem(ADMIN_CFG_KEY) || '{}') }; }
+  catch { return { ...ADMIN_DEFAULTS }; }
+}
+
+function loadAdminSettingsToUI() {
+  const cfg = loadAdminCfg();
+  // 디자인
+  setColorField('c-accent',  'cp-accent',  cfg.accentColor);
+  setColorField('c-accent2', 'cp-accent2', cfg.accentColor2);
+  setColorField('c-bg',      'cp-bg',      cfg.bgColor);
+  setColorField('c-surface', 'cp-surface', cfg.surfaceColor);
+  document.getElementById('font-body').value = cfg.fontBody;
+  document.getElementById('border-radius').value = cfg.borderRadius;
+  document.getElementById('base-fontsize').value = cfg.baseFontSize;
+  previewFont();
+  // 텍스트
+  document.getElementById('txt-title').value     = cfg.txtTitle;
+  document.getElementById('txt-ver').value       = cfg.txtVer;
+  document.getElementById('txt-watermark').value = cfg.txtWatermark;
+  document.getElementById('txt-card1').value     = cfg.txtCard1;
+  document.getElementById('txt-card2').value     = cfg.txtCard2;
+  document.getElementById('txt-runbtn').value    = cfg.txtRunBtn;
+  // 계산
+  document.getElementById('def-rnd-unit').value    = cfg.defRndUnit;
+  document.getElementById('def-rnd-dir').value     = cfg.defRndDir;
+  document.getElementById('def-ratio').value       = cfg.defRatio;
+  document.getElementById('def-allowance').value   = cfg.defAllowance;
+  document.getElementById('def-salary-unit').value = String(cfg.defSalaryUnit);
+  document.getElementById('def-sev-denom').value   = String(cfg.defSevDenom);
+  // 레이아웃
+  document.getElementById('layout-left-width').value  = cfg.layoutLeftWidth;
+  document.getElementById('layout-result-pad').value  = cfg.layoutResultPad;
+  document.getElementById('layout-density').value     = cfg.layoutDensity;
+  document.getElementById('layout-sticky').value      = cfg.layoutSticky;
+}
+
+function setColorField(textId, colorId, val) {
+  document.getElementById(textId).value = val;
+  document.getElementById(colorId).value = val;
+}
+
+function syncColor(srcId, dstId) {
+  const v = document.getElementById(srcId).value;
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+    document.getElementById(dstId).value = v;
+    liveApply();
+  }
+}
+
+function previewFont() {
+  const f = document.getElementById('font-body').value;
+  document.getElementById('font-preview-box').style.fontFamily = f;
+}
+
+function liveApply() {
+  const r = document.documentElement.style;
+  const getV = id => document.getElementById(id)?.value;
+  if (/^#[0-9a-fA-F]{6}$/.test(getV('c-accent')))  r.setProperty('--accent',  getV('c-accent'));
+  if (/^#[0-9a-fA-F]{6}$/.test(getV('c-accent2'))) r.setProperty('--accent2', getV('c-accent2'));
+  if (/^#[0-9a-fA-F]{6}$/.test(getV('c-bg')))      r.setProperty('--bg',      getV('c-bg'));
+  if (/^#[0-9a-fA-F]{6}$/.test(getV('c-surface'))) r.setProperty('--surface', getV('c-surface'));
+  const br = parseInt(getV('border-radius'));
+  if (!isNaN(br)) r.setProperty('--radius', br+'px');
+  const fs = parseInt(getV('base-fontsize'));
+  if (!isNaN(fs)) document.body.style.fontSize = fs+'px';
+  const lw = parseInt(getV('layout-left-width'));
+  if (!isNaN(lw)) document.querySelector('.layout').style.gridTemplateColumns = `${lw}px 1fr`;
+  const rp = parseInt(getV('layout-result-pad'));
+  if (!isNaN(rp)) {
+    document.getElementById('result-area').style.padding = `${rp}px`;
+    document.querySelector('.result-header').style.padding = `${Math.round(rp*.7)}px ${rp}px`;
+  }
+}
+
+function saveAdminSettings() {
+  const getV = id => document.getElementById(id)?.value || '';
+  const cfg = {
+    accentColor:    getV('c-accent'),
+    accentColor2:   getV('c-accent2'),
+    bgColor:        getV('c-bg'),
+    surfaceColor:   getV('c-surface'),
+    fontBody:       getV('font-body'),
+    borderRadius:   parseInt(getV('border-radius')) || 10,
+    baseFontSize:   parseInt(getV('base-fontsize')) || 14,
+    txtTitle:       getV('txt-title')     || ADMIN_DEFAULTS.txtTitle,
+    txtVer:         getV('txt-ver')       || ADMIN_DEFAULTS.txtVer,
+    txtWatermark:   getV('txt-watermark') || ADMIN_DEFAULTS.txtWatermark,
+    txtCard1:       getV('txt-card1')     || ADMIN_DEFAULTS.txtCard1,
+    txtCard2:       getV('txt-card2')     || ADMIN_DEFAULTS.txtCard2,
+    txtRunBtn:      getV('txt-runbtn')    || ADMIN_DEFAULTS.txtRunBtn,
+    defRndUnit:     getV('def-rnd-unit'),
+    defRndDir:      getV('def-rnd-dir'),
+    defRatio:       parseInt(getV('def-ratio')) || 100,
+    defAllowance:   parseInt(getV('def-allowance')) || 0,
+    defSalaryUnit:  parseInt(getV('def-salary-unit')) || 1000,
+    defSevDenom:    parseInt(getV('def-sev-denom')) || 13,
+    layoutLeftWidth: parseInt(getV('layout-left-width')) || 380,
+    layoutResultPad: parseInt(getV('layout-result-pad')) || 28,
+    layoutDensity:  getV('layout-density'),
+    layoutSticky:   getV('layout-sticky'),
+  };
+  localStorage.setItem(ADMIN_CFG_KEY, JSON.stringify(cfg));
+  applyAdminCfg(cfg);
+  document.getElementById('admin-save-hint').textContent = `✅ 저장 완료 — ${new Date().toLocaleTimeString('ko-KR')}`;
+  setTimeout(() => {
+    document.getElementById('admin-save-hint').textContent = '변경사항은 브라우저에 저장됩니다.';
+  }, 3000);
+  toast('✅ 설정이 저장됐습니다.');
+}
+
+function applyAdminCfg(cfg) {
+  const r = document.documentElement.style;
+  if (cfg.accentColor)  r.setProperty('--accent',  cfg.accentColor);
+  if (cfg.accentColor2) r.setProperty('--accent2', cfg.accentColor2);
+  if (cfg.bgColor)      r.setProperty('--bg',      cfg.bgColor);
+  if (cfg.surfaceColor) r.setProperty('--surface', cfg.surfaceColor);
+  if (cfg.fontBody)     r.setProperty('--sans', cfg.fontBody);
+  r.setProperty('--radius', (cfg.borderRadius||10)+'px');
+  document.body.style.fontSize = (cfg.baseFontSize||14)+'px';
+
+  // 텍스트 적용
+  const h1 = document.querySelector('header h1');
+  if (h1 && cfg.txtTitle) h1.textContent = cfg.txtTitle;
+  const ver = document.querySelector('.ver');
+  if (ver && cfg.txtVer) ver.textContent = cfg.txtVer;
+  const cardHeaders = document.querySelectorAll('.card-header');
+  if (cardHeaders[0] && cfg.txtCard1) cardHeaders[0].textContent = cfg.txtCard1;
+  if (cardHeaders[1] && cfg.txtCard2) cardHeaders[1].textContent = cfg.txtCard2;
+  const runBtn = document.querySelector('.btn-primary');
+  if (runBtn && cfg.txtRunBtn) runBtn.textContent = cfg.txtRunBtn;
+
+  // 계산 기본값 적용
+  const unitEl = document.querySelector(`input[name="rnd-unit"][value="${cfg.defRndUnit}"]`);
+  if (unitEl) unitEl.checked = true;
+  const dirEl = document.querySelector(`input[name="rnd-dir"][value="${cfg.defRndDir}"]`);
+  if (dirEl) dirEl.checked = true;
+  updateRndPreview();
+
+  // 레이아웃
+  const layout = document.querySelector('.layout');
+  if (layout) layout.style.gridTemplateColumns = `${cfg.layoutLeftWidth||380}px 1fr`;
+  const ra = document.getElementById('result-area');
+  if (ra) ra.style.padding = `${cfg.layoutResultPad||28}px`;
+  const rh = document.querySelector('.result-header');
+  if (rh) rh.style.padding = `${Math.round((cfg.layoutResultPad||28)*.7)}px ${cfg.layoutResultPad||28}px`;
+  const header = document.querySelector('header');
+  if (header) header.style.position = cfg.layoutSticky || 'sticky';
+}
+
+function resetAdminSettings() {
+  if (!confirm('모든 설정을 기본값으로 초기화하시겠습니까?')) return;
+  localStorage.removeItem(ADMIN_CFG_KEY);
+  applyAdminCfg(ADMIN_DEFAULTS);
+  loadAdminSettingsToUI();
+  toast('↺ 설정이 기본값으로 초기화됐습니다.');
+}
+
+// ── URL ?admin 파라미터 자동 열기 ──
+if (new URLSearchParams(location.search).has('admin')) {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(openAdmin, 300));
+}
+
 function updateRndPreview() {
   const unit = parseInt(document.querySelector('input[name="rnd-unit"]:checked')?.value || '10');
   const dir  = document.querySelector('input[name="rnd-dir"]:checked')?.value || '올림';
@@ -1208,6 +1848,8 @@ function updateRndPreview() {
 // 초기 실행
 // ════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+  // 저장된 관리자 설정 즉시 적용
+  applyAdminCfg(loadAdminCfg());
   addCond();
   renderHistory();
   updateRndPreview();
