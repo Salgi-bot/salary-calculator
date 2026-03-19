@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>근로계약 및 퇴직금 산출기 v3.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --bg:        #f5f4f0;
+  --surface:   #ffffff;
+  --surface2:  #f0efe9;
+  --border:    #dddbd2;
+  --border2:   #c8c5ba;
+  --text:      #1a1917;
+  --text2:     #4a4845;
+  --text3:     #8a8780;
+  --accent:    #1a3a5c;
+  --accent2:   #2d5f8a;
+  --gold:      #b5882a;
+  --gold-bg:   #fdf5e4;
+  --red:       #c0392b;
+  --red-bg:    #fdf0ee;
+  --green:     #1e6e4a;
+  --green-bg:  #edf7f2;
+  --shadow:    0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.05);
+  --radius:    10px;
+  --mono:      'JetBrains Mono', monospace;
+  --sans:      'Noto Sans KR', sans-serif;
+}
+[data-theme="dark"] {
+  --bg:       #111213;
+  --surface:  #1c1d1f;
+  --surface2: #242628;
+  --border:   #2e3032;
+  --border2:  #3a3d40;
+  --text:     #e8e6e1;
+  --text2:    #a0a09a;
+  --text3:    #606060;
+  --accent:   #4a8aba;
+  --accent2:  #6aabd6;
+  --gold:     #d4a843;
+  --gold-bg:  #1e1a10;
+  --red:      #e05a50;
+  --red-bg:   #1e1210;
+  --green:    #4caf82;
+  --green-bg: #0d1f17;
+  --shadow:   0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.2);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+  transition: background .2s, color .2s;
+}
+/* ── 헤더 ── */
+header {
+  background: var(--accent);
+  color: #fff;
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,.15);
+}
+.header-title { display: flex; align-items: center; gap: 12px; }
+.header-title h1 { font-size: 16px; font-weight: 700; letter-spacing: -.3px; }
+.header-title .ver {
+  font-size: 10px; font-family: var(--mono);
+  background: rgba(255,255,255,.15);
+  padding: 2px 8px; border-radius: 20px;
+  letter-spacing: .5px;
+}
+.header-actions { display: flex; gap: 8px; }
+.hbtn {
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--sans);
+  transition: background .15s;
+}
+.hbtn:hover { background: rgba(255,255,255,.22); }
+/* ── 레이아웃 ── */
+.layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 0;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 60px);
+}
+.panel-left {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.panel-right {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+/* ── 카드 ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.card-header {
+  padding: 11px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text2);
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.card-body { padding: 16px; }
+/* ── 폼 요소 ── */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.form-row.single { grid-template-columns: 1fr; }
+.form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+label { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: .4px; text-transform: uppercase; }
+input[type="text"], input[type="number"], select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-family: var(--sans);
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  width: 100%;
+}
+input[type="text"]:focus, input[type="number"]:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(26,58,92,.1);
+}
+input.mono { font-family: var(--mono); font-size: 13px; }
+input.error { border-color: var(--red) !important; background: var(--red-bg); }
+/* ── 라디오 ── */
+.radio-group { display: flex; gap: 16px; }
+.radio-label {
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer; font-size: 13px; color: var(--text2);
+  user-select: none;
+}
+.radio-label input { accent-color: var(--accent); cursor: pointer; }
+/* ── 단위 선택 칩 ── */
+.rnd-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  cursor: pointer; user-select: none;
+  padding: 4px 10px; border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: 12px; font-weight: 500; color: var(--text2);
+  background: var(--surface);
+  transition: all .12s;
+}
+.rnd-chip:has(input:checked) {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+}
+.rnd-chip input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+/* ── 조건 행 ── */
+.cond-list { display: flex; flex-direction: column; gap: 8px; }
+.cond-row {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  position: relative;
+  animation: fadeIn .2s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+.cond-row .cond-num {
+  font-size: 10px; font-weight: 700; font-family: var(--mono);
+  color: var(--accent); background: rgba(26,58,92,.1);
+  padding: 1px 6px; border-radius: 4px;
+  display: inline-block; margin-bottom: 8px;
+}
+.cond-inner { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 32px; gap: 8px; align-items: end; }
+.cond-del {
+  background: none; border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer; padding: 8px;
+  color: var(--text3); font-size: 12px;
+  transition: background .1s, color .1s;
+  height: 36px; display: flex; align-items: center; justify-content: center;
+}
+.cond-del:hover { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+/* ── 버튼 ── */
+.btn {
+  border: none; border-radius: 8px; cursor: pointer;
+  font-family: var(--sans); font-weight: 700;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: all .15s; white-space: nowrap;
+}
+.btn-primary {
+  background: var(--accent); color: #fff;
+  padding: 12px 20px; font-size: 14px; width: 100%;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(26,58,92,.3);
+}
+.btn-primary:hover { background: var(--accent2); box-shadow: 0 4px 14px rgba(26,58,92,.4); }
+.btn-secondary {
+  background: var(--surface2); color: var(--text2);
+  border: 1px solid var(--border);
+  padding: 9px 14px; font-size: 13px;
+}
+.btn-secondary:hover { background: var(--border); color: var(--text); }
+.btn-outline {
+  background: none; color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 7px 14px; font-size: 13px;
+}
+.btn-outline:hover { background: var(--accent); color: #fff; }
+.btn-add {
+  background: none; color: var(--accent2);
+  border: 1px dashed var(--accent2);
+  padding: 8px 14px; font-size: 13px; width: 100%;
+  justify-content: center; border-radius: 8px;
+}
+.btn-add:hover { background: rgba(26,58,92,.06); }
+.actions { display: flex; gap: 8px; }
+/* ── 결과 패널 ── */
+.result-header {
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+}
+.result-header h2 { font-size: 15px; font-weight: 700; }
+.result-actions { display: flex; gap: 8px; }
+#result-area {
+  flex: 1;
+  padding: 24px 28px;
+}
+/* ── 결과 카드 ── */
+.result-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 360px; color: var(--text3); gap: 12px; text-align: center;
+}
+.result-empty .icon { font-size: 48px; opacity: .3; }
+.result-empty p { font-size: 14px; }
+/* 기본 정보 카드 */
+.res-info {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.res-info h3 { font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 10px; }
+.res-info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.res-kv { display: flex; flex-direction: column; gap: 2px; }
+.res-kv .k { font-size: 11px; color: var(--text3); font-weight: 500; }
+.res-kv .v { font-size: 14px; color: var(--text); font-weight: 700; font-family: var(--mono); }
+.res-kv .v.name { font-family: var(--sans); }
+/* 세그먼트 카드 */
+.seg-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.seg-header {
+  padding: 12px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.seg-name { font-size: 12px; font-weight: 700; color: var(--accent); }
+.seg-period { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+.seg-rates {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: 20px;
+  background: rgba(26,58,92,.03);
+}
+.seg-rate { font-size: 12px; color: var(--text2); }
+.seg-rate strong { font-family: var(--mono); color: var(--text); font-weight: 600; }
+.seg-months { padding: 0; }
+.seg-month-row {
+  padding: 8px 16px;
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr 1fr;
+  gap: 8px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+}
+.seg-month-row:last-child { border-bottom: none; }
+.seg-month-row .type-badge {
+  display: inline-block;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 6px; border-radius: 4px;
+}
+.badge-full { background: var(--green-bg); color: var(--green); }
+.badge-part { background: var(--gold-bg); color: var(--gold); }
+.seg-month-row .ym { color: var(--text2); font-family: var(--mono); font-size: 11px; }
+.seg-month-row .amt { text-align: right; font-family: var(--mono); font-size: 12px; }
+.seg-subtotal {
+  padding: 10px 16px;
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 24px;
+}
+.seg-subtotal .sub-item { text-align: right; }
+.seg-subtotal .sub-label { font-size: 11px; color: var(--text3); }
+.seg-subtotal .sub-val { font-size: 13px; font-weight: 700; font-family: var(--mono); color: var(--text); }
+/* 최종 합산 */
+.total-card {
+  background: var(--accent);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  color: #fff;
+  margin-top: 16px;
+  margin-bottom: 24px;
+}
+.total-card h3 { font-size: 12px; opacity: .7; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 14px; }
+.total-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.total-item .tl { font-size: 11px; opacity: .7; margin-bottom: 4px; }
+.total-item .tv { font-size: 18px; font-weight: 700; font-family: var(--mono); }
+.total-item.big .tv { font-size: 22px; }
+/* ── 히스토리 ── */
+.history-list { display: flex; flex-direction: column; gap: 6px; }
+.hist-item {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all .12s;
+}
+.hist-item:hover { border-color: var(--accent); background: rgba(26,58,92,.05); }
+.hist-info { flex: 1; min-width: 0; }
+.hist-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-date { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+.hist-del {
+  background: none; border: none; cursor: pointer;
+  color: var(--text3); font-size: 14px; padding: 2px 6px;
+  border-radius: 4px; flex-shrink: 0;
+}
+.hist-del:hover { background: var(--red-bg); color: var(--red); }
+.no-history { text-align: center; color: var(--text3); font-size: 12px; padding: 12px; }
+/* ── 반응형 스크롤바 ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+/* ── Toast 알림 ── */
+.toast {
+  position: fixed; bottom: 28px; right: 28px;
+  background: var(--text); color: var(--bg);
+  padding: 12px 20px; border-radius: 8px;
+  font-size: 13px; font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  z-index: 9999;
+  animation: toastIn .25s ease;
+  max-width: 320px;
+}
+@keyframes toastIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+/* ── 모바일 ── */
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+  .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
+  .res-info-grid { grid-template-columns: repeat(2, 1fr); }
+  .total-grid { grid-template-columns: 1fr 1fr; }
+  .result-header { padding: 16px 20px 12px; }
+  #result-area { padding: 16px 20px; }
+  .cond-inner { grid-template-columns: 1fr 1fr; }
+  .cond-inner .cond-del { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    <h1>근로계약 및 퇴직금 산출기</h1>
+    <span class="ver">v3.5 BOSS</span>
+  </div>
+  <div class="header-actions">
+    <button class="hbtn" onclick="toggleTheme()" id="theme-btn">🌙 다크모드</button>
+    <button class="hbtn" onclick="resetForm()">↺ 초기화</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- ── 왼쪽 입력 패널 ── -->
+  <aside class="panel-left">
+
+    <!-- 기본 계약 정보 -->
+    <div class="card">
+      <div class="card-header">📋 기본 계약 정보</div>
+      <div class="card-body">
+        <div class="form-row single" style="margin-bottom:12px">
+          <div class="field">
+            <label>당사자 이름</label>
+            <input type="text" id="inp-name" placeholder="홍길동">
+          </div>
+        </div>
+        <div class="form-row single" style="margin-bottom:12px">
+          <div class="field">
+            <label>연봉 (만원 단위)</label>
+            <input type="text" id="inp-salary" class="mono" placeholder="3,500" oninput="fmtComma(this)">
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="field">
+            <label>계약 시작일</label>
+            <input type="text" id="inp-start" class="mono" placeholder="240101" maxlength="8" onblur="autoDate(this,true)">
+          </div>
+          <div class="field">
+            <label>계약 종료일</label>
+            <input type="text" id="inp-end" class="mono" placeholder="241231" maxlength="8" onblur="autoDate(this,false)">
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>월 퇴직금 단위 처리</label>
+          <div style="display:flex; flex-direction:column; gap:8px; padding:6px 0">
+            <div style="display:flex; align-items:center; gap:8px">
+              <span style="font-size:11px; color:var(--text3); width:32px; flex-shrink:0">단위</span>
+              <div style="display:flex; gap:6px; flex-wrap:wrap">
+                <label class="rnd-chip"><input type="radio" name="rnd-unit" value="1"> 1원</label>
+                <label class="rnd-chip"><input type="radio" name="rnd-unit" value="10" checked> 10원</label>
+                <label class="rnd-chip"><input type="radio" name="rnd-unit" value="100"> 100원</label>
+                <label class="rnd-chip"><input type="radio" name="rnd-unit" value="1000"> 1,000원</label>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px">
+              <span style="font-size:11px; color:var(--text3); width:32px; flex-shrink:0">방향</span>
+              <div style="display:flex; gap:6px">
+                <label class="rnd-chip"><input type="radio" name="rnd-dir" value="올림" checked> 올림 ↑</label>
+                <label class="rnd-chip"><input type="radio" name="rnd-dir" value="버림"> 버림 ↓</label>
+              </div>
+            </div>
+            <div id="rnd-preview" style="font-size:11px; color:var(--accent); font-family:var(--mono); padding:4px 8px; background:rgba(26,58,92,.07); border-radius:5px; border-left:2px solid var(--accent)">
+              예: 1,234.7원 → 1,235원 (1원 올림)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 기간별 조건 -->
+    <div class="card">
+      <div class="card-header">⚙️ 기간별 조건</div>
+      <div class="card-body" style="padding-bottom:12px">
+        <p style="font-size:12px; color:var(--text3); margin-bottom:12px">
+          종료일 입력 시 다음 조건 시작일 자동 연동. 시작·종료 모두 비우면 나머지 기간 자동 채움.
+        </p>
+        <div class="cond-list" id="cond-list"></div>
+        <button class="btn btn-add" onclick="addCond()" style="margin-top:10px">
+          + 조건 추가
+        </button>
+      </div>
+    </div>
+
+    <!-- 실행 버튼 -->
+    <button class="btn btn-primary" onclick="calculate()" style="font-size:15px; padding:14px">
+      ▶ 정밀 산출 실행
+    </button>
+
+    <!-- 히스토리 -->
+    <div class="card">
+      <div class="card-header">🕒 최근 작업 내역</div>
+      <div class="card-body" style="padding:12px">
+        <div class="history-list" id="hist-list"></div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ── 오른쪽 결과 패널 ── -->
+  <main class="panel-right">
+    <div class="result-header">
+      <h2>📊 산출 결과 내역</h2>
+      <div class="result-actions">
+        <button class="btn btn-secondary" onclick="copyResult()">📋 텍스트 복사</button>
+        <button class="btn btn-outline" onclick="exportPDF()">📄 PDF 저장</button>
+      </div>
+    </div>
+    <div id="result-area">
+      <div class="result-empty">
+        <div class="icon">📂</div>
+        <p>좌측에서 계약 정보를 입력하고<br><strong>정밀 산출 실행</strong>을 눌러주세요.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// 전역 상태
+// ════════════════════════════════════════════
+let condCount = 0;
+let latestResultText = '';
+let latestResultData = null;
+const HIST_KEY = 'salary_calc_history_v35';
+
+// ════════════════════════════════════════════
+// 테마 토글
+// ════════════════════════════════════════════
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+  document.getElementById('theme-btn').textContent = isDark ? '🌙 다크모드' : '☀️ 라이트모드';
+  localStorage.setItem('salary_theme', isDark ? '' : 'dark');
+}
+(function() {
+  const t = localStorage.getItem('salary_theme');
+  if (t === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', () => {
+      const b = document.getElementById('theme-btn');
+      if (b) b.textContent = '☀️ 라이트모드';
+    });
+  }
+})();
+
+// ════════════════════════════════════════════
+// 날짜 유틸
+// ════════════════════════════════════════════
+function parseDate(s) {
+  if (!s) return null;
+  s = s.replace(/[-./]/g, '').trim();
+  if (s.length === 4 && /^\d+$/.test(s)) {
+    const y = 2000 + parseInt(s.slice(0,2));
+    const m = parseInt(s.slice(2,4));
+    if (m < 1 || m > 12) throw new Error('월 범위 오류');
+    const last = new Date(y, m, 0).getDate();
+    return new Date(y, m-1, last);
+  }
+  if (s.length === 6 && /^\d+$/.test(s)) {
+    const y = 2000 + parseInt(s.slice(0,2));
+    const m = parseInt(s.slice(2,4));
+    const d = parseInt(s.slice(4,6));
+    return new Date(y, m-1, d);
+  }
+  if (s.length === 8 && /^\d+$/.test(s)) {
+    const y = parseInt(s.slice(0,4));
+    const m = parseInt(s.slice(4,6));
+    const d = parseInt(s.slice(6,8));
+    return new Date(y, m-1, d);
+  }
+  throw new Error('날짜 형식 오류: ' + s);
+}
+
+function fmtDate(d) {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
+  return `${y}.${m}.${dd}`;
+}
+function fmtDate6(d) {
+  const y = String(d.getFullYear()).slice(-2), m = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
+  return `${y}${m}${dd}`;
+}
+function fmtYM(d) {
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+
+function addDays(d, n) {
+  const r = new Date(d); r.setDate(r.getDate() + n); return r;
+}
+
+function getYMD(start, end) {
+  // end+1일 기준으로 연·월·일 차이 계산
+  const e = addDays(end, 1);
+  let y = e.getFullYear() - start.getFullYear();
+  let m = e.getMonth()   - start.getMonth();
+  let d = e.getDate()    - start.getDate();
+
+  let ref = new Date(e);
+  while (d < 0) {
+    m -= 1;
+    if (ref.getMonth() === 0) { ref.setFullYear(ref.getFullYear()-1); ref.setMonth(11); }
+    else { ref.setMonth(ref.getMonth()-1); }
+    d += daysInMonth(ref.getFullYear(), ref.getMonth()+1);
+  }
+  while (m < 0) { y -= 1; m += 12; }
+  return `${y}년 ${m}개월 ${d}일`;
+}
+
+function autoDate(el, isStart) {
+  let v = el.value.replace(/[-./]/g,'').trim();
+  if (v.length === 4 && /^\d+$/.test(v)) {
+    const y = 2000 + parseInt(v.slice(0,2));
+    const mo = parseInt(v.slice(2,4));
+    if (mo >= 1 && mo <= 12) {
+      const day = isStart ? '01' : String(daysInMonth(y, mo)).padStart(2,'0');
+      el.value = `${v}${day}`;
+    }
+  }
+  // 첫 조건 시작일 자동 연동
+  if (isStart && el.id === 'inp-start') {
+    const rows = document.querySelectorAll('.cond-row');
+    if (rows.length > 0) {
+      const firstStart = rows[0].querySelector('.cond-start');
+      if (firstStart && !firstStart.value.trim()) {
+        try { firstStart.value = fmtDate6(parseDate(el.value)); } catch(e) {}
+      }
+    }
+  }
+}
+
+function fmtComma(el) {
+  const raw = el.value.replace(/,/g,'');
+  if (/^\d+$/.test(raw)) el.value = parseInt(raw).toLocaleString();
+}
+
+// ════════════════════════════════════════════
+// 조건 행 관리
+// ════════════════════════════════════════════
+function addCond(opts={}) {
+  condCount++;
+  const list = document.getElementById('cond-list');
+  const id = 'cond-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'cond-row';
+  div.id = id;
+
+  // 이전 조건 종료일+1 자동
+  let autoStart = opts.start || '';
+  if (!autoStart) {
+    const rows = list.querySelectorAll('.cond-row');
+    if (rows.length > 0) {
+      const prevEnd = rows[rows.length-1].querySelector('.cond-end');
+      if (prevEnd && prevEnd.value.trim()) {
+        try {
+          autoStart = fmtDate6(addDays(parseDate(prevEnd.value), 1));
+        } catch(e) {}
+      }
+    } else {
+      const cs = document.getElementById('inp-start');
+      if (cs && cs.value.trim()) {
+        try { autoStart = fmtDate6(parseDate(cs.value)); } catch(e) {}
+      }
+    }
+  }
+
+  div.innerHTML = `
+    <span class="cond-num">조건 ${condCount}</span>
+    <div class="cond-inner">
+      <div class="field"><label>시작일</label>
+        <input type="text" class="mono cond-start" value="${opts.start||autoStart}" placeholder="240101" maxlength="8"
+          onblur="condStartBlur(this)" style="font-size:12px;padding:7px 10px">
+      </div>
+      <div class="field"><label>종료일</label>
+        <input type="text" class="mono cond-end" value="${opts.end||''}" placeholder="240630" maxlength="8"
+          onblur="condEndBlur(this)" style="font-size:12px;padding:7px 10px">
+      </div>
+      <div class="field"><label>월주재비(만)</label>
+        <input type="text" class="mono cond-allw" value="${opts.allowance||'0'}" placeholder="0"
+          oninput="fmtComma(this)" style="font-size:12px;padding:7px 10px">
+      </div>
+      <div class="field"><label>비율(%)</label>
+        <input type="text" class="mono cond-ratio" value="${opts.ratio||'100'}" placeholder="100"
+          style="font-size:12px;padding:7px 10px">
+      </div>
+      <button class="cond-del" onclick="removeCond('${id}')" title="삭제">✕</button>
+    </div>
+  `;
+  list.appendChild(div);
+}
+
+function removeCond(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+  // 번호 재정렬
+  document.querySelectorAll('.cond-row .cond-num').forEach((el,i) => {
+    el.textContent = '조건 ' + (i+1);
+  });
+}
+
+function condStartBlur(el) {
+  autoDate(el, true);
+}
+
+function condEndBlur(el) {
+  autoDate(el, false);
+  // 다음 조건 시작일 자동
+  const row = el.closest('.cond-row');
+  const nextRow = row.nextElementSibling;
+  if (nextRow && nextRow.classList.contains('cond-row') && el.value.trim()) {
+    try {
+      const nextStart = nextRow.querySelector('.cond-start');
+      if (nextStart && !nextStart.value.trim()) {
+        nextStart.value = fmtDate6(addDays(parseDate(el.value), 1));
+      }
+    } catch(e) {}
+  }
+}
+
+// ════════════════════════════════════════════
+// 초기화
+// ════════════════════════════════════════════
+function resetForm() {
+  document.getElementById('inp-name').value = '';
+  document.getElementById('inp-salary').value = '';
+  document.getElementById('inp-start').value = '';
+  document.getElementById('inp-end').value = '';
+  document.querySelector('input[name="rnd-unit"][value="10"]').checked = true;
+  document.querySelector('input[name="rnd-dir"][value="올림"]').checked = true;
+  updateRndPreview();
+  document.getElementById('cond-list').innerHTML = '';
+  condCount = 0;
+  addCond();
+  document.getElementById('result-area').innerHTML = `
+    <div class="result-empty">
+      <div class="icon">📂</div>
+      <p>좌측에서 계약 정보를 입력하고<br><strong>정밀 산출 실행</strong>을 눌러주세요.</p>
+    </div>`;
+  latestResultText = '';
+  latestResultData = null;
+  ['inp-name','inp-salary','inp-start','inp-end'].forEach(id => {
+    document.getElementById(id).classList.remove('error');
+  });
+}
+
+// ════════════════════════════════════════════
+// 핵심 계산 엔진
+// ════════════════════════════════════════════
+function getMonthSegments(start, end) {
+  const segs = [];
+  let curr = new Date(start);
+  while (curr <= end) {
+    const y = curr.getFullYear(), m = curr.getMonth();
+    const last = new Date(y, m+1, 0);
+    const segEnd = last < end ? last : new Date(end);
+    segs.push([new Date(curr), segEnd]);
+    curr = new Date(y, m+1, 1);
+  }
+  return segs;
+}
+
+function applyRound(val, dir, unit) {
+  unit = unit || 1;
+  if (dir === '올림') return Math.ceil(val / unit) * unit;
+  return Math.floor(val / unit) * unit;
+}
+function salaryRound(val) {
+  return Math.round(val / 10) * 10;
+}
+
+function validate() {
+  let ok = true;
+  const fields = ['inp-name','inp-salary','inp-start','inp-end'];
+  fields.forEach(id => document.getElementById(id).classList.remove('error'));
+
+  if (!document.getElementById('inp-name').value.trim()) {
+    document.getElementById('inp-name').classList.add('error'); ok = false;
+  }
+  if (!document.getElementById('inp-salary').value.trim()) {
+    document.getElementById('inp-salary').classList.add('error'); ok = false;
+  }
+  try { parseDate(document.getElementById('inp-start').value); }
+  catch { document.getElementById('inp-start').classList.add('error'); ok = false; }
+  try { parseDate(document.getElementById('inp-end').value); }
+  catch { document.getElementById('inp-end').classList.add('error'); ok = false; }
+
+  return ok;
+}
+
+function calculate() {
+  if (!validate()) { toast('⚠️ 붉게 표시된 필수 항목을 확인해주세요.'); return; }
+
+  const name         = document.getElementById('inp-name').value.trim();
+  const salaryInput  = document.getElementById('inp-salary').value.replace(/,/g,'');
+  const salary       = parseInt(salaryInput) * 10000;
+  const roundUnit    = parseInt(document.querySelector('input[name="rnd-unit"]:checked').value);
+  const roundDir     = document.querySelector('input[name="rnd-dir"]:checked').value;
+  const roundMode    = roundDir; // 하위 호환용
+
+  let contractStart, contractEnd;
+  try {
+    contractStart = parseDate(document.getElementById('inp-start').value);
+    contractEnd   = parseDate(document.getElementById('inp-end').value);
+  } catch(e) { toast('날짜 형식 오류: ' + e.message); return; }
+
+  // 날짜 정규화
+  document.getElementById('inp-start').value = fmtDate6(contractStart);
+  document.getElementById('inp-end').value   = fmtDate6(contractEnd);
+
+  // 마지막 조건 종료일 자동
+  const condRows = [...document.querySelectorAll('.cond-row')];
+  if (condRows.length > 0) {
+    const lastEnd = condRows[condRows.length-1].querySelector('.cond-end');
+    if (lastEnd && !lastEnd.value.trim()) lastEnd.value = fmtDate6(contractEnd);
+  }
+
+  // 조건 파싱
+  let explicitConds = [];
+  let emptyConds    = [];
+
+  condRows.forEach((row, idx) => {
+    const sStr   = row.querySelector('.cond-start').value.trim();
+    const eStr   = row.querySelector('.cond-end').value.trim();
+    const allwStr = row.querySelector('.cond-allw').value.replace(/,/g,'') || '0';
+    const ratioStr = row.querySelector('.cond-ratio').value || '100';
+
+    if (!sStr && !eStr) {
+      emptyConds.push({ allw: allwStr, ratio: ratioStr, name: `조건 ${idx+1}` });
+    } else {
+      try {
+        const cs = sStr ? parseDate(sStr) : new Date(contractStart);
+        const ce = eStr ? parseDate(eStr) : new Date(contractEnd);
+        if (sStr) row.querySelector('.cond-start').value = fmtDate6(cs);
+        if (eStr) row.querySelector('.cond-end').value   = fmtDate6(ce);
+        explicitConds.push({ start:cs, end:ce, allw:allwStr, ratio:ratioStr, name:`조건 ${idx+1}` });
+      } catch(e) { toast(`조건 ${idx+1} 날짜 오류: ` + e.message); return; }
+    }
+  });
+
+  // 빈 조건 → 미포함 날짜 자동 채움
+  if (emptyConds.length > 0) {
+    const totalMs = 86400000;
+    const allDays = new Set();
+    for (let d = new Date(contractStart); d <= contractEnd; d = addDays(d,1))
+      allDays.add(d.getTime());
+
+    const covered = new Set();
+    explicitConds.forEach(c => {
+      for (let d = new Date(c.start); d <= c.end; d = addDays(d,1)) covered.add(d.getTime());
+    });
+
+    const remaining = [...allDays].filter(t => !covered.has(t)).sort();
+    if (remaining.length > 0) {
+      const gapStart = new Date(remaining[0]);
+      const gapEnd   = new Date(remaining[remaining.length-1]);
+      emptyConds.forEach((ec, i) => {
+        const row = condRows.find(r => !r.querySelector('.cond-start').value && !r.querySelector('.cond-end').value);
+        if (row) {
+          row.querySelector('.cond-start').value = fmtDate6(gapStart);
+          row.querySelector('.cond-end').value   = fmtDate6(gapEnd);
+        }
+        explicitConds.push({ start:gapStart, end:gapEnd, allw:ec.allw, ratio:ec.ratio, name:`${ec.name} (자동 역산)` });
+      });
+    }
+  }
+
+  // 날짜 → 조건 맵
+  const dayMap = {};
+  explicitConds.forEach(c => {
+    for (let d = new Date(c.start); d <= c.end; d = addDays(d,1)) {
+      if (d >= contractStart && d <= contractEnd)
+        dayMap[d.getTime()] = { allw: c.allw, ratio: c.ratio, name: c.name };
+    }
+  });
+  const fallback = { allw: '0', ratio: '100', name: '미입력 구간' };
+  for (let d = new Date(contractStart); d <= contractEnd; d = addDays(d,1))
+    if (!dayMap[d.getTime()]) dayMap[d.getTime()] = fallback;
+
+  // 연속 세그먼트 분리
+  const segments = [];
+  let segStart = new Date(contractStart);
+  let currVal  = dayMap[contractStart.getTime()];
+
+  for (let d = addDays(contractStart,1); d <= contractEnd; d = addDays(d,1)) {
+    const v = dayMap[d.getTime()];
+    if (v.allw !== currVal.allw || v.ratio !== currVal.ratio || v.name !== currVal.name) {
+      segments.push({ start: new Date(segStart), end: addDays(d,-1), ...currVal });
+      segStart = new Date(d);
+      currVal  = v;
+    }
+  }
+  segments.push({ start: new Date(segStart), end: new Date(contractEnd), ...currVal });
+
+  // 세그먼트별 계산
+  const ymdStr   = getYMD(contractStart, contractEnd);
+  const totalDays = Math.round((contractEnd - contractStart) / 86400000) + 1;
+  let totalSalarySum = 0, totalSevSum = 0;
+
+  const segResults = segments.map(seg => {
+    const allowance   = parseFloat(seg.allw) * 10000;
+    const ratioF      = parseFloat(seg.ratio) / 100;
+    const totalFund   = salary + allowance * 12;
+    const monthlyBase = Math.floor((totalFund / 13) / 1000) * 1000;
+    const exactSev    = (totalFund - monthlyBase * 12) / 12;
+
+    const finalMonthly = salaryRound(monthlyBase * ratioF);
+    const finalSev     = applyRound(exactSev * ratioF, roundDir, roundUnit);
+
+    const monthSegs = getMonthSegments(seg.start, seg.end);
+    let condSalarySum = 0, condSevSum = 0;
+    let fullCount = 0;
+    const monthRows = [];
+
+    monthSegs.forEach(([ms, me]) => {
+      const dim = daysInMonth(ms.getFullYear(), ms.getMonth()+1);
+      const worked = Math.round((me - ms) / 86400000) + 1;
+      if (worked === dim) {
+        fullCount++;
+      } else {
+        if (fullCount > 0) {
+          const fSal = finalMonthly * fullCount;
+          const fSev = finalSev     * fullCount;
+          condSalarySum += fSal; condSevSum += fSev;
+          monthRows.push({ type:'full', count:fullCount, sal:fSal, sev:fSev, ym:'' });
+          fullCount = 0;
+        }
+        const pSal = salaryRound(finalMonthly * worked / dim);
+        const pSev = applyRound(finalSev      * worked / dim, roundDir, roundUnit);
+        condSalarySum += pSal; condSevSum += pSev;
+        monthRows.push({ type:'part', worked, dim, sal:pSal, sev:pSev, ym:fmtYM(ms) });
+      }
+    });
+    if (fullCount > 0) {
+      const fSal = finalMonthly * fullCount;
+      const fSev = finalSev     * fullCount;
+      condSalarySum += fSal; condSevSum += fSev;
+      monthRows.push({ type:'full', count:fullCount, sal:fSal, sev:fSev, ym:'' });
+    }
+
+    totalSalarySum += condSalarySum;
+    totalSevSum    += condSevSum;
+
+    return { ...seg, finalMonthly, finalSev, allowance, ratioF,
+             condSalarySum, condSevSum, monthRows };
+  });
+
+  // 히스토리 저장
+  const histRecord = {
+    name, salary: salaryInput,
+    start: fmtDate6(contractStart), end: fmtDate6(contractEnd),
+    roundUnit, roundDir,
+    conds: condRows.map(r => ({
+      start:   r.querySelector('.cond-start').value,
+      end:     r.querySelector('.cond-end').value,
+      allowance: r.querySelector('.cond-allw').value.replace(/,/g,''),
+      ratio:   r.querySelector('.cond-ratio').value,
+    })),
+    timestamp: new Date().toLocaleString('ko-KR')
+  };
+  saveHistory(histRecord);
+
+  // 결과 저장 (PDF/텍스트 출력용)
+  latestResultData = { name, salary, ymdStr, totalDays, contractStart, contractEnd, segResults, totalSalarySum, totalSevSum, roundUnit, roundDir };
+  latestResultText = buildTextResult(latestResultData);
+
+  // UI 렌더
+  renderResult(latestResultData);
+}
+
+// ════════════════════════════════════════════
+// 결과 렌더링
+// ════════════════════════════════════════════
+function n(v) { return Math.round(v).toLocaleString(); }
+
+function renderResult(data) {
+  const { name, salary, ymdStr, totalDays, contractStart, contractEnd, segResults, totalSalarySum, totalSevSum, roundUnit, roundDir } = data;
+  const rndLabel = `${roundUnit >= 1000 ? '1,000' : roundUnit}원 ${roundDir}`;
+
+  let html = `
+  <div class="res-info">
+    <h3>기본 계약 정보</h3>
+    <div class="res-info-grid">
+      <div class="res-kv"><span class="k">당사자</span><span class="v name">${name}</span></div>
+      <div class="res-kv"><span class="k">계약 기간</span><span class="v" style="font-size:12px">${fmtDate(contractStart)} ~ ${fmtDate(contractEnd)}</span></div>
+      <div class="res-kv"><span class="k">총 기간</span><span class="v" style="font-size:12px">${ymdStr} / ${totalDays}일</span></div>
+      <div class="res-kv"><span class="k">책정 연봉</span><span class="v">${n(salary)}원</span></div>
+    </div>
+  </div>`;
+
+  segResults.forEach(seg => {
+    html += `<div class="seg-card">
+      <div class="seg-header">
+        <span class="seg-name">${seg.name}</span>
+        <span class="seg-period">${fmtDate(seg.start)} ~ ${fmtDate(seg.end)}</span>
+      </div>
+      <div class="seg-rates">
+        <span class="seg-rate">월급 <strong>${n(seg.finalMonthly)}원</strong></span>
+        <span class="seg-rate">월 퇴직금 <strong>${n(seg.finalSev)}원</strong> <span style="font-size:10px;opacity:.7">(${rndLabel})</span></span>
+        <span class="seg-rate">주재비 <strong>${n(seg.allowance)}원</strong></span>
+        <span class="seg-rate">비율 <strong>${Math.round(seg.ratioF*100)}%</strong></span>
+      </div>
+      <div class="seg-months">
+        <div class="seg-month-row" style="background:var(--surface2);font-weight:700;color:var(--text2);font-size:11px;letter-spacing:.3px">
+          <span>구분</span><span style="text-align:right">기간/내용</span><span style="text-align:right">급여</span><span style="text-align:right">퇴직금</span>
+        </div>`;
+    seg.monthRows.forEach(r => {
+      if (r.type === 'full') {
+        html += `<div class="seg-month-row">
+          <span><span class="type-badge badge-full">만근 통합</span></span>
+          <span class="amt">연속 ${r.count}개월</span>
+          <span class="amt">${n(r.sal)}원</span>
+          <span class="amt">${n(r.sev)}원</span>
+        </div>`;
+      } else {
+        html += `<div class="seg-month-row">
+          <span><span class="type-badge badge-part">부분 산정</span></span>
+          <span class="ym">${r.ym} (${r.worked}/${r.dim}일)</span>
+          <span class="amt">${n(r.sal)}원</span>
+          <span class="amt">${n(r.sev)}원</span>
+        </div>`;
+      }
+    });
+    html += `</div>
+      <div class="seg-subtotal">
+        <div class="sub-item"><div class="sub-label">구간 급여 소계</div><div class="sub-val">${n(seg.condSalarySum)}원</div></div>
+        <div class="sub-item"><div class="sub-label">구간 퇴직금 소계</div><div class="sub-val">${n(seg.condSevSum)}원</div></div>
+      </div>
+    </div>`;
+  });
+
+  html += `<div class="total-card">
+    <h3>💰 최종 정산 결과 요약</h3>
+    <div class="total-grid">
+      <div class="total-item"><div class="tl">총 급여 지급 누계</div><div class="tv">${n(totalSalarySum)}원</div></div>
+      <div class="total-item"><div class="tl">최종 총 퇴직금</div><div class="tv">${n(totalSevSum)}원</div></div>
+      <div class="total-item big"><div class="tl">▶ 총 지급액 합계</div><div class="tv">${n(totalSalarySum+totalSevSum)}원</div></div>
+    </div>
+  </div>`;
+
+  document.getElementById('result-area').innerHTML = html;
+}
+
+// ════════════════════════════════════════════
+// 텍스트 결과 생성 (복사/PDF용)
+// ════════════════════════════════════════════
+function buildTextResult(data) {
+  const { name, salary, ymdStr, totalDays, contractStart, contractEnd, segResults, totalSalarySum, totalSevSum } = data;
+  let t = '';
+  t += `■ 기본 계약 정보\n`;
+  t += `- 계약 당사자: ${name}\n`;
+  t += `- 계약 기간: ${fmtDate(contractStart)} ~ ${fmtDate(contractEnd)} (${ymdStr})\n`;
+  t += `- 책정 연봉: ${n(salary)}원\n\n`;
+  t += `■ 금액 산출 내역\n${'='.repeat(60)}\n`;
+
+  segResults.forEach(seg => {
+    t += `▣ [${seg.name}] ${fmtDate(seg.start)} ~ ${fmtDate(seg.end)}\n`;
+    t += ` - 주재비: ${n(seg.allowance)}원 / 비율: ${Math.round(seg.ratioF*100)}%\n`;
+    t += ` - 확정 월급: ${n(seg.finalMonthly)}원 | 월 퇴직금: ${n(seg.finalSev)}원\n`;
+    t += `${'-'.repeat(60)}\n`;
+    seg.monthRows.forEach(r => {
+      if (r.type === 'full')
+        t += `   * [만근 통합] 연속 ${r.count}개월: 급여 ${n(r.sal)}원 | 퇴직금 ${n(r.sev)}원\n`;
+      else
+        t += `   * [부분 산정] ${r.ym} (${r.worked}일): 급여 ${n(r.sal)}원 | 퇴직금 ${n(r.sev)}원\n`;
+    });
+    t += ` ▶ 소계: 급여 ${n(seg.condSalarySum)}원 | 퇴직금 ${n(seg.condSevSum)}원\n`;
+    t += `${'='.repeat(60)}\n`;
+  });
+
+  t += `\n💰 최종 정산 결과 (총 기간: ${ymdStr} / ${totalDays}일)\n`;
+  t += `- 총 급여 지급 누계액: ${n(totalSalarySum)}원\n`;
+  t += `- 최종 총 퇴직금: ${n(totalSevSum)}원\n`;
+  t += `▶ 총 지급액 합계: ${n(totalSalarySum+totalSevSum)}원\n`;
+  t += `\n생성 일시: ${new Date().toLocaleString('ko-KR')} | 계산 엔진: v3.5 Boss Edition`;
+  return t;
+}
+
+// ════════════════════════════════════════════
+// 복사 / PDF
+// ════════════════════════════════════════════
+function copyResult() {
+  if (!latestResultText) { toast('먼저 산출을 실행해주세요.'); return; }
+  navigator.clipboard.writeText(latestResultText).then(() => toast('✅ 클립보드에 복사됐습니다.')).catch(() => toast('복사 실패 — 수동으로 복사해주세요.'));
+}
+
+function exportPDF() {
+  if (!latestResultText) { toast('먼저 산출을 실행해주세요.'); return; }
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'p', unit:'mm', format:'a4' });
+
+    // jsPDF 기본 폰트로 한글 처리 (영문/숫자 위주 출력)
+    // 한글 완벽 지원은 폰트 파일 embed 필요 — 여기서는 텍스트 그대로 출력
+    doc.setFont('helvetica');
+    doc.setFontSize(10);
+
+    const lines = latestResultText.split('\n');
+    const margin = 15;
+    let y = 20;
+    const pageH = 297;
+
+    lines.forEach(line => {
+      if (y > pageH - 15) { doc.addPage(); y = 20; }
+      doc.text(line, margin, y);
+      y += 5;
+    });
+
+    const name = document.getElementById('inp-name').value.trim() || '계약자';
+    const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    doc.save(`${dateStr}_${name}_산출결과.pdf`);
+    toast('✅ PDF가 저장됐습니다.');
+  } catch(e) {
+    toast('PDF 저장 오류: ' + e.message);
+  }
+}
+
+// ════════════════════════════════════════════
+// 히스토리
+// ════════════════════════════════════════════
+function loadHistData() {
+  try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); } catch { return []; }
+}
+
+function saveHistory(rec) {
+  let hist = loadHistData().filter(h => !(h.name===rec.name && h.start===rec.start));
+  hist.unshift(rec);
+  hist = hist.slice(0,10);
+  localStorage.setItem(HIST_KEY, JSON.stringify(hist));
+  renderHistory();
+}
+
+function deleteHistory(idx) {
+  const hist = loadHistData();
+  hist.splice(idx, 1);
+  localStorage.setItem(HIST_KEY, JSON.stringify(hist));
+  renderHistory();
+}
+
+function loadHistItem(idx) {
+  const h = loadHistData()[idx];
+  if (!h) return;
+  resetForm();
+  document.getElementById('inp-name').value   = h.name;
+  document.getElementById('inp-salary').value = parseInt(h.salary).toLocaleString();
+  document.getElementById('inp-start').value  = h.start;
+  document.getElementById('inp-end').value    = h.end;
+  const rndUnit = document.querySelector(`input[name="rnd-unit"][value="${h.roundUnit||'10'}"]`);
+  if (rndUnit) rndUnit.checked = true;
+  const rndDir = document.querySelector(`input[name="rnd-dir"][value="${h.roundDir||h.roundMode||'올림'}"]`);
+  if (rndDir) rndDir.checked = true;
+  updateRndPreview();
+
+  document.getElementById('cond-list').innerHTML = '';
+  condCount = 0;
+  (h.conds || []).forEach(c => {
+    const allwInt = isNaN(parseFloat(c.allowance)) ? 0 : Math.round(parseFloat(c.allowance));
+    addCond({ start:c.start, end:c.end, allowance:allwInt.toLocaleString(), ratio:c.ratio });
+  });
+  toast('✅ 불러왔습니다: ' + h.name);
+}
+
+function renderHistory() {
+  const list = document.getElementById('hist-list');
+  const hist = loadHistData();
+  if (hist.length === 0) {
+    list.innerHTML = '<div class="no-history">저장된 내역이 없습니다.</div>';
+    return;
+  }
+  list.innerHTML = hist.map((h,i) => `
+    <div class="hist-item" onclick="loadHistItem(${i})">
+      <div class="hist-info">
+        <div class="hist-name">${h.name}</div>
+        <div class="hist-date">${h.start} ~ ${h.end}</div>
+      </div>
+      <button class="hist-del" onclick="event.stopPropagation();deleteHistory(${i})" title="삭제">✕</button>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════
+// Toast
+// ════════════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.querySelector('.toast');
+  if (el) el.remove();
+  clearTimeout(toastTimer);
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  toastTimer = setTimeout(() => t.remove(), 3000);
+}
+
+// ════════════════════════════════════════════
+// 반올림 미리보기
+// ════════════════════════════════════════════
+function updateRndPreview() {
+  const unit = parseInt(document.querySelector('input[name="rnd-unit"]:checked')?.value || '10');
+  const dir  = document.querySelector('input[name="rnd-dir"]:checked')?.value || '올림';
+  const sample = 1234.7;
+  const result = dir === '올림'
+    ? Math.ceil(sample / unit) * unit
+    : Math.floor(sample / unit) * unit;
+  const unitLabel = unit >= 1000 ? '1,000원' : `${unit}원`;
+  const el = document.getElementById('rnd-preview');
+  if (el) el.textContent = `예: 1,234.7원 → ${result.toLocaleString()}원  (${unitLabel} ${dir})`;
+}
+
+// ════════════════════════════════════════════
+// 초기 실행
+// ════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  addCond();
+  renderHistory();
+  updateRndPreview();
+  // 반올림 옵션 변경 시 미리보기 갱신
+  document.querySelectorAll('input[name="rnd-unit"], input[name="rnd-dir"]').forEach(el => {
+    el.addEventListener('change', updateRndPreview);
+  });
+  // Cmd/Ctrl + Enter 산출
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) calculate();
+  });
+});
+</script>
+</body>
+</html>
