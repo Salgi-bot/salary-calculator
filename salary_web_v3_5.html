@@ -816,6 +816,28 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
             </div>
           </div>
         </div>
+        <div class="field" style="margin-top:10px; margin-bottom:0">
+          <label>최종 총 퇴직금 단위처리</label>
+          <div style="display:flex; flex-direction:column; gap:8px; padding:6px 0">
+            <div style="display:flex; align-items:center; gap:8px">
+              <span style="font-size:11px; color:var(--text3); width:32px; flex-shrink:0">단위</span>
+              <div style="display:flex; gap:6px; flex-wrap:wrap">
+                <label class="rnd-chip"><input type="radio" name="total-rnd-unit" value="1" checked> 1원</label>
+                <label class="rnd-chip"><input type="radio" name="total-rnd-unit" value="10"> 10원</label>
+                <label class="rnd-chip"><input type="radio" name="total-rnd-unit" value="100"> 100원</label>
+                <label class="rnd-chip"><input type="radio" name="total-rnd-unit" value="1000"> 1,000원</label>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px">
+              <span style="font-size:11px; color:var(--text3); width:32px; flex-shrink:0">방향</span>
+              <div style="display:flex; gap:6px">
+                <label class="rnd-chip"><input type="radio" name="total-rnd-dir" value="없음" checked> 없음</label>
+                <label class="rnd-chip"><input type="radio" name="total-rnd-dir" value="올림"> 올림 ↑</label>
+                <label class="rnd-chip"><input type="radio" name="total-rnd-dir" value="버림"> 버림 ↓</label>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1079,6 +1101,8 @@ function resetForm() {
   document.getElementById('inp-end').value = '';
   document.querySelector('input[name="rnd-unit"][value="10"]').checked = true;
   document.querySelector('input[name="rnd-dir"][value="올림"]').checked = true;
+  document.querySelector('input[name="total-rnd-unit"][value="1"]').checked = true;
+  document.querySelector('input[name="total-rnd-dir"][value="없음"]').checked = true;
   updateRndPreview();
   document.getElementById('cond-list').innerHTML = '';
   condCount = 0;
@@ -1296,6 +1320,11 @@ function calculate() {
              condSalarySum, condSevSum, monthRows };
   });
 
+  // 최종 총 퇴직금 단위처리
+  const totalRndUnit = parseInt(document.querySelector('input[name="total-rnd-unit"]:checked').value);
+  const totalRndDir  = document.querySelector('input[name="total-rnd-dir"]:checked').value;
+  const totalSevFinal = (totalRndDir === '없음') ? totalSevSum : applyRound(totalSevSum, totalRndDir, totalRndUnit);
+
   // 히스토리 저장
   const histRecord = {
     name, salary: salaryInput,
@@ -1312,7 +1341,7 @@ function calculate() {
   saveHistory(histRecord);
 
   // 결과 저장 (PDF/텍스트 출력용)
-  latestResultData = { name, salary, ymdStr, totalDays, contractStart, contractEnd, segResults, totalSalarySum, totalSevSum, roundUnit, roundDir };
+  latestResultData = { name, salary, ymdStr, totalDays, contractStart, contractEnd, segResults, totalSalarySum, totalSevSum, totalSevFinal, totalRndUnit, totalRndDir, roundUnit, roundDir };
   latestResultText = buildTextResult(latestResultData);
 
   // UI 렌더
@@ -1325,7 +1354,7 @@ function calculate() {
 function n(v) { return Math.round(v).toLocaleString(); }
 
 function renderResult(data) {
-  const { name, salary, ymdStr, totalDays, contractStart, contractEnd, segResults, totalSalarySum, totalSevSum, roundUnit, roundDir } = data;
+  const { name, salary, ymdStr, totalDays, contractStart, contractEnd, segResults, totalSalarySum, totalSevSum, totalSevFinal, totalRndUnit, totalRndDir, roundUnit, roundDir } = data;
   const rndLabel = `${roundUnit >= 1000 ? '1,000' : roundUnit}원 ${roundDir}`;
 
   let html = `
@@ -1384,8 +1413,8 @@ function renderResult(data) {
     <h3>💰 최종 정산 결과 요약</h3>
     <div class="total-grid">
       <div class="total-item"><div class="tl">총 급여 지급 누계</div><div class="tv">${n(totalSalarySum)}원</div></div>
-      <div class="total-item"><div class="tl">최종 총 퇴직금</div><div class="tv">${n(totalSevSum)}원</div></div>
-      <div class="total-item big"><div class="tl">▶ 총 지급액 합계</div><div class="tv">${n(totalSalarySum+totalSevSum)}원</div></div>
+      <div class="total-item"><div class="tl">최종 총 퇴직금${totalRndDir !== '없음' ? ` <span style="font-size:10px;opacity:.6">(${totalRndUnit >= 1000 ? '1,000원' : totalRndUnit + '원'} ${totalRndDir})</span>` : ''}</div><div class="tv">${n(totalSevFinal)}원</div></div>
+      <div class="total-item big"><div class="tl">▶ 총 지급액 합계</div><div class="tv">${n(totalSalarySum+totalSevFinal)}원</div></div>
     </div>
   </div>`;
 
@@ -1396,7 +1425,7 @@ function renderResult(data) {
 // 텍스트 결과 생성 (복사/PDF용)
 // ════════════════════════════════════════════
 function buildTextResult(data) {
-  const { name, salary, ymdStr, totalDays, contractStart, contractEnd, segResults, totalSalarySum, totalSevSum } = data;
+  const { name, salary, ymdStr, totalDays, contractStart, contractEnd, segResults, totalSalarySum, totalSevSum, totalSevFinal, totalRndUnit, totalRndDir } = data;
   let t = '';
   t += `■ 기본 계약 정보\n`;
   t += `- 계약 당사자: ${name}\n`;
@@ -1421,8 +1450,8 @@ function buildTextResult(data) {
 
   t += `\n💰 최종 정산 결과 (총 기간: ${ymdStr} / ${totalDays}일)\n`;
   t += `- 총 급여 지급 누계액: ${n(totalSalarySum)}원\n`;
-  t += `- 최종 총 퇴직금: ${n(totalSevSum)}원\n`;
-  t += `▶ 총 지급액 합계: ${n(totalSalarySum+totalSevSum)}원\n`;
+  t += `- 최종 총 퇴직금: ${n(totalSevFinal)}원${totalRndDir !== '없음' ? ` (${totalRndUnit >= 1000 ? '1,000원' : totalRndUnit + '원'} ${totalRndDir})` : ''}\n`;
+  t += `▶ 총 지급액 합계: ${n(totalSalarySum+totalSevFinal)}원\n`;
   t += `\n생성 일시: ${new Date().toLocaleString('ko-KR')} | 계산 엔진: v3.5 Boss Edition`;
   return t;
 }
