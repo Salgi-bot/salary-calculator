@@ -495,6 +495,10 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
   #result-area { padding: 16px 20px; }
   .cond-inner { grid-template-columns: 1fr 1fr; }
   .cond-inner .cond-del { display: none; }
+  header { padding: 10px 16px; }
+  .header-title h1 { font-size: 13px; }
+  .header-title .ver { display: none; }
+  .hbtn { font-size: 12px; padding: 5px 10px; }
 }
 </style>
 </head>
@@ -856,8 +860,8 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
       <h2>📊 산출 결과 내역</h2>
       <div class="result-actions">
         <button class="btn btn-secondary" onclick="copyResult()">📋 텍스트 복사</button>
-        <button class="btn btn-outline" onclick="exportPDF()">📄 PDF 저장</button>
-        <button class="btn btn-outline" onclick="exportJSON()">💾 JSON 저장</button>
+        <button class="btn btn-secondary" onclick="exportPDF()">📄 PDF 저장</button>
+        <button class="btn btn-secondary" onclick="exportJSON()">💾 JSON 저장</button>
       </div>
     </div>
     <div id="result-area">
@@ -1308,6 +1312,9 @@ function calculate() {
 
   // UI 렌더
   renderResult(latestResultData);
+  if (window.innerWidth <= 860) {
+    document.querySelector('.result-header').scrollIntoView({ behavior: 'smooth' });
+  }
 }
 
 // ════════════════════════════════════════════
