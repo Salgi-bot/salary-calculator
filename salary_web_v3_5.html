@@ -30,25 +30,6 @@
   --mono:      'JetBrains Mono', monospace;
   --sans:      'Noto Sans KR', sans-serif;
 }
-[data-theme="dark"] {
-  --bg:       #111213;
-  --surface:  #1c1d1f;
-  --surface2: #242628;
-  --border:   #2e3032;
-  --border2:  #3a3d40;
-  --text:     #e8e6e1;
-  --text2:    #a0a09a;
-  --text3:    #606060;
-  --accent:   #4a8aba;
-  --accent2:  #6aabd6;
-  --gold:     #d4a843;
-  --gold-bg:  #1e1a10;
-  --red:      #e05a50;
-  --red-bg:   #1e1210;
-  --green:    #4caf82;
-  --green-bg: #0d1f17;
-  --shadow:   0 1px 3px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.2);
-}
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: var(--sans);
@@ -526,7 +507,6 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
   </div>
   <div class="header-actions">
     <button class="hbtn-admin" onclick="openAdmin()" title="관리자 설정">⚙️</button>
-    <button class="hbtn" onclick="toggleTheme()" id="theme-btn">🌙 다크모드</button>
     <button class="hbtn" onclick="resetForm()">↺ 초기화</button>
   </div>
 </header>
@@ -898,25 +878,6 @@ let latestResultText = '';
 let latestResultData = null;
 const HIST_KEY = 'salary_calc_history_v35';
 
-// ════════════════════════════════════════════
-// 테마 토글
-// ════════════════════════════════════════════
-function toggleTheme() {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
-  document.getElementById('theme-btn').textContent = isDark ? '🌙 다크모드' : '☀️ 라이트모드';
-  localStorage.setItem('salary_theme', isDark ? '' : 'dark');
-}
-(function() {
-  const t = localStorage.getItem('salary_theme');
-  if (t === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    document.addEventListener('DOMContentLoaded', () => {
-      const b = document.getElementById('theme-btn');
-      if (b) b.textContent = '☀️ 라이트모드';
-    });
-  }
-})();
 
 // ════════════════════════════════════════════
 // 날짜 유틸
