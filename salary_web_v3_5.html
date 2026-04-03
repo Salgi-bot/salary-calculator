@@ -1698,7 +1698,7 @@ function handleJSONImport(e) {
       if (d.segments && d.segments.length > 0) {
         document.getElementById('cond-list').innerHTML = '';
         condCount = 0;
-        d.segments.forEach(s => addCond({ start: s.start, end: s.end, allowance: s.allowance, ratio: s.ratio }));
+        d.segments.forEach(s => addCond({ start: s.start, end: s.end, allowance: Math.round((s.allowance || 0) / 10000), ratio: s.ratio }));
       }
       updateRndPreview();
       toast('✅ JSON 불러오기 완료 — 산출을 다시 실행해주세요.');
