@@ -499,6 +499,8 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
   .header-title h1 { font-size: 13px; }
   .header-title .ver { display: none; }
   .hbtn { font-size: 12px; padding: 5px 10px; }
+  .panel-left, .panel-right { overflow-y: visible; }
+  .result-actions { flex-wrap: wrap; }
 }
 </style>
 </head>
@@ -1313,7 +1315,7 @@ function calculate() {
   // UI 렌더
   renderResult(latestResultData);
   if (window.innerWidth <= 860) {
-    document.querySelector('.result-header').scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => document.querySelector('.result-header').scrollIntoView({ behavior: 'instant', block: 'start' }), 50);
   }
 }
 
