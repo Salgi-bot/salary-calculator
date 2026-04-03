@@ -6,7 +6,6 @@
 <title>근로계약 및 퇴직금 산출기 v3.5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
   --bg:        #f5f4f0;
@@ -862,9 +861,11 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
       <h2>📊 산출 결과 내역</h2>
       <div class="result-actions">
         <button class="btn btn-secondary" onclick="copyResult()">📋 텍스트 복사</button>
-        <button class="btn btn-secondary" onclick="exportPDF()">📄 PDF 저장</button>
+        <button class="btn btn-secondary" onclick="printResult()">🖨️ 출력</button>
         <button class="btn btn-secondary" onclick="exportJSON()">💾 JSON 저장</button>
+        <button class="btn btn-secondary" onclick="importJSON()">📂 JSON 불러오기</button>
       </div>
+      <input type="file" id="json-import-input" accept=".json" style="display:none" onchange="handleJSONImport(event)">
     </div>
     <div id="result-area">
       <div class="result-empty">
@@ -1435,35 +1436,56 @@ function copyResult() {
   navigator.clipboard.writeText(latestResultText).then(() => toast('✅ 클립보드에 복사됐습니다.')).catch(() => toast('복사 실패 — 수동으로 복사해주세요.'));
 }
 
-function exportPDF() {
-  if (!latestResultText) { toast('먼저 산출을 실행해주세요.'); return; }
-  try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation:'p', unit:'mm', format:'a4' });
+function printResult() {
+  if (!latestResultData) { toast('먼저 산출을 실행해주세요.'); return; }
+  window.print();
+}
 
-    // jsPDF 기본 폰트로 한글 처리 (영문/숫자 위주 출력)
-    // 한글 완벽 지원은 폰트 파일 embed 필요 — 여기서는 텍스트 그대로 출력
-    doc.setFont('helvetica');
-    doc.setFontSize(10);
+function importJSON() {
+  document.getElementById('json-import-input').click();
+}
 
-    const lines = latestResultText.split('\n');
-    const margin = 15;
-    let y = 20;
-    const pageH = 297;
-
-    lines.forEach(line => {
-      if (y > pageH - 15) { doc.addPage(); y = 20; }
-      doc.text(line, margin, y);
-      y += 5;
-    });
-
-    const name = document.getElementById('inp-name').value.trim() || '계약자';
-    const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
-    doc.save(`${dateStr}_${name}_산출결과.pdf`);
-    toast('✅ PDF가 저장됐습니다.');
-  } catch(e) {
-    toast('PDF 저장 오류: ' + e.message);
-  }
+function handleJSONImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const d = JSON.parse(ev.target.result);
+      resetForm();
+      if (d.name)          document.getElementById('inp-name').value   = d.name;
+      if (d.salary != null) document.getElementById('inp-salary').value = Math.round(d.salary / 10000);
+      if (d.contractStart) document.getElementById('inp-start').value  = d.contractStart;
+      if (d.contractEnd)   document.getElementById('inp-end').value    = d.contractEnd;
+      if (d.roundUnit) {
+        const u = document.querySelector(`input[name="rnd-unit"][value="${d.roundUnit}"]`);
+        if (u) u.checked = true;
+      }
+      if (d.roundDir) {
+        const dr = document.querySelector(`input[name="rnd-dir"][value="${d.roundDir}"]`);
+        if (dr) dr.checked = true;
+      }
+      if (d.totalRndUnit) {
+        const tu = document.querySelector(`input[name="total-rnd-unit"][value="${d.totalRndUnit}"]`);
+        if (tu) tu.checked = true;
+      }
+      if (d.totalRndDir) {
+        const tdr = document.querySelector(`input[name="total-rnd-dir"][value="${d.totalRndDir}"]`);
+        if (tdr) tdr.checked = true;
+      }
+      if (d.segments && d.segments.length > 0) {
+        document.getElementById('cond-list').innerHTML = '';
+        condCount = 0;
+        d.segments.forEach(s => addCond({ start: s.start, end: s.end, allowance: s.allowance, ratio: s.ratio }));
+      }
+      updateRndPreview();
+      toast('✅ JSON 불러오기 완료 — 산출을 다시 실행해주세요.');
+    } catch(err) {
+      toast('JSON 파싱 오류: ' + err.message);
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
 }
 
 function exportJSON() {
