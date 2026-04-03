@@ -877,6 +877,7 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
       <div class="result-actions">
         <button class="btn btn-secondary" onclick="copyResult()">📋 텍스트 복사</button>
         <button class="btn btn-outline" onclick="exportPDF()">📄 PDF 저장</button>
+        <button class="btn btn-outline" onclick="exportJSON()">💾 JSON 저장</button>
       </div>
     </div>
     <div id="result-area">
@@ -1493,6 +1494,48 @@ function exportPDF() {
   } catch(e) {
     toast('PDF 저장 오류: ' + e.message);
   }
+}
+
+function exportJSON() {
+  if (!latestResultData) { toast('먼저 산출을 실행해주세요.'); return; }
+  const d = latestResultData;
+  const payload = {
+    _version: 'v3.5',
+    _exported: new Date().toLocaleString('ko-KR'),
+    name: d.name,
+    contractStart: fmtDate6(d.contractStart),
+    contractEnd:   fmtDate6(d.contractEnd),
+    totalDays:     d.totalDays,
+    ymdStr:        d.ymdStr,
+    salary:        d.salary,
+    roundUnit:     d.roundUnit,
+    roundDir:      d.roundDir,
+    totalRndUnit:  d.totalRndUnit,
+    totalRndDir:   d.totalRndDir,
+    segments: d.segResults.map(s => ({
+      start:       fmtDate6(s.start),
+      end:         fmtDate6(s.end),
+      days:        s.days,
+      salary:      s.salary,
+      allowance:   s.allowance,
+      ratio:       s.ratio,
+      salaryPart:  s.salaryPart,
+      sevPart:     s.sevPart,
+    })),
+    totalSalarySum: d.totalSalarySum,
+    totalSevSum:    d.totalSevSum,
+    totalSevFinal:  d.totalSevFinal,
+    totalPayment:   d.totalSalarySum + d.totalSevFinal,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  a.href     = url;
+  a.download = `${dateStr}_${d.name}_산출결과.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ JSON이 저장됐습니다.');
 }
 
 // ════════════════════════════════════════════
