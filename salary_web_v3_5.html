@@ -627,7 +627,7 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
           </div>
           <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
             <div style="padding:10px 14px;background:var(--surface2);font-weight:600">Q. 관리자 설정은 무엇인가요?</div>
-            <div style="padding:10px 14px">헤더 우측 ⚙️ 버튼으로 접근. 색상·폰트·퇴직금 분모·반올림 단위 등을 변경할 수 있습니다.<br><span style="color:var(--text3)">비밀번호가 필요합니다 (기본값은 앱 배포 담당자에게 문의).</span></div>
+            <div style="padding:10px 14px">헤더 우측 ⚙️ 버튼으로 접근. 색상·폰트·퇴직금 분모·반올림 단위 등을 변경할 수 있습니다.</div>
           </div>
         </div>
       </div>
@@ -645,42 +645,8 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
 <div class="admin-overlay" id="admin-overlay" onclick="overlayClick(event)">
   <div class="admin-modal" id="admin-modal">
 
-    <!-- 비밀번호 화면 -->
-    <div id="admin-pw-screen" class="admin-pw-screen">
-      <div class="lock-icon">🔐</div>
-      <h3>관리자 인증</h3>
-      <p>설정을 변경하려면 관리자 비밀번호를 입력하세요.</p>
-      <div class="pw-input-row">
-        <input type="password" id="pw-input" placeholder="••••••" maxlength="20"
-          onkeydown="if(event.key==='Enter') checkPw()">
-        <button class="btn btn-primary" style="width:auto;padding:10px 18px" onclick="checkPw()">확인</button>
-      </div>
-      <div class="pw-error-msg" id="pw-error"></div>
-      <button class="change-pw-link" onclick="showChangePw()">비밀번호 변경</button>
-    </div>
-
-    <!-- 비밀번호 변경 화면 -->
-    <div id="admin-changepw-screen" class="admin-pw-screen" style="display:none">
-      <div class="lock-icon">🔑</div>
-      <h3>비밀번호 변경</h3>
-      <p>현재 비밀번호를 입력하고 새 비밀번호를 설정하세요.</p>
-      <div style="display:flex;flex-direction:column;gap:8px;width:260px">
-        <input type="password" id="cpw-current" placeholder="현재 비밀번호"
-          style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:14px;font-family:var(--sans);color:var(--text);outline:none;width:100%">
-        <input type="password" id="cpw-new" placeholder="새 비밀번호"
-          style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:14px;font-family:var(--sans);color:var(--text);outline:none;width:100%">
-        <input type="password" id="cpw-confirm" placeholder="새 비밀번호 확인"
-          style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:14px;font-family:var(--sans);color:var(--text);outline:none;width:100%">
-        <div class="pw-error-msg" id="cpw-error"></div>
-        <div style="display:flex;gap:8px;margin-top:4px">
-          <button class="btn btn-secondary" style="flex:1" onclick="showPwScreen()">← 취소</button>
-          <button class="btn btn-primary" style="flex:1" onclick="doChangePw()">변경 저장</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 설정 화면 (로그인 후) -->
-    <div id="admin-settings-screen" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+    <!-- 설정 화면 -->
+    <div id="admin-settings-screen" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
       <div class="admin-header">
         <h2>⚙️ 관리자 설정</h2>
         <button class="admin-close" onclick="closeAdmin()">✕</button>
@@ -863,7 +829,7 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
         <span class="hint" id="admin-save-hint">변경사항은 브라우저에 저장됩니다.</span>
         <div class="afooter-btns">
           <button class="btn btn-secondary" onclick="resetAdminSettings()">기본값 초기화</button>
-          <button class="btn btn-secondary" onclick="showChangePw()">🔑 비밀번호 변경</button>
+
           <button class="btn btn-primary" style="width:auto;padding:10px 22px" onclick="saveAdminSettings()">💾 저장 및 적용</button>
         </div>
       </div>
@@ -1835,19 +1801,6 @@ function toast(msg) {
 // 관리자 패널
 // ════════════════════════════════════════════
 const ADMIN_CFG_KEY = 'salary_admin_cfg_v35';
-const DEFAULT_PW_HASH = '9f86d081884c7d659a2feaa0c55ad015'; // "test" — MD5, 첫 실행 시 변경 권장
-const PW_HASH_KEY = 'salary_admin_pw_hash';
-
-// 단순 해시 (보안보다 편의 목적 — 소스에 노출되는 구조임을 인지)
-async function hashPw(pw) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
-  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
-function getStoredHash() {
-  return localStorage.getItem(PW_HASH_KEY) || DEFAULT_PW_HASH;
-}
-
 function openHelp() {
   document.getElementById('help-overlay').style.display = 'block';
   document.body.style.overflow = 'hidden';
@@ -1859,8 +1812,7 @@ function closeHelp() {
 
 function openAdmin() {
   document.getElementById('admin-overlay').classList.add('open');
-  showPwScreen();
-  setTimeout(() => document.getElementById('pw-input')?.focus(), 100);
+  loadAdminSettingsToUI();
 }
 
 function closeAdmin() {
@@ -1871,64 +1823,6 @@ function overlayClick(e) {
   if (e.target === document.getElementById('admin-overlay')) closeAdmin();
 }
 
-function showPwScreen() {
-  document.getElementById('admin-pw-screen').style.display = 'flex';
-  document.getElementById('admin-changepw-screen').style.display = 'none';
-  document.getElementById('admin-settings-screen').style.display = 'none';
-  document.getElementById('pw-input').value = '';
-  document.getElementById('pw-error').textContent = '';
-}
-
-function showChangePw() {
-  document.getElementById('admin-pw-screen').style.display = 'none';
-  document.getElementById('admin-changepw-screen').style.display = 'flex';
-  document.getElementById('admin-settings-screen').style.display = 'none';
-  ['cpw-current','cpw-new','cpw-confirm'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('cpw-error').textContent = '';
-}
-
-async function checkPw() {
-  const pw = document.getElementById('pw-input').value;
-  const h  = await hashPw(pw);
-  const stored = getStoredHash();
-  // DEFAULT_PW_HASH는 MD5("test") — SHA-256("test")와 다름, 최초엔 항상 변경 유도
-  const ok = (h === stored) || (pw === 'test' && stored === DEFAULT_PW_HASH);
-  if (ok) {
-    document.getElementById('admin-pw-screen').style.display = 'none';
-    document.getElementById('admin-settings-screen').style.display = 'flex';
-    loadAdminSettingsToUI();
-  } else {
-    const el = document.getElementById('pw-input');
-    el.classList.add('pw-error');
-    document.getElementById('pw-error').textContent = '비밀번호가 올바르지 않습니다.';
-    setTimeout(() => el.classList.remove('pw-error'), 400);
-    el.value = '';
-    el.focus();
-  }
-}
-
-async function doChangePw() {
-  const cur     = document.getElementById('cpw-current').value;
-  const nw      = document.getElementById('cpw-new').value;
-  const confirm = document.getElementById('cpw-confirm').value;
-  const errEl   = document.getElementById('cpw-error');
-
-  if (!nw || nw.length < 4) { errEl.textContent = '새 비밀번호는 4자 이상이어야 합니다.'; return; }
-  if (nw !== confirm)         { errEl.textContent = '새 비밀번호가 일치하지 않습니다.'; return; }
-
-  const curHash = await hashPw(cur);
-  const stored  = getStoredHash();
-  const curOk   = (curHash === stored) || (cur === 'test' && stored === DEFAULT_PW_HASH);
-  if (!curOk) { errEl.textContent = '현재 비밀번호가 올바르지 않습니다.'; return; }
-
-  const newHash = await hashPw(nw);
-  localStorage.setItem(PW_HASH_KEY, newHash);
-  toast('✅ 비밀번호가 변경됐습니다.');
-  document.getElementById('admin-pw-screen').style.display = 'none';
-  document.getElementById('admin-changepw-screen').style.display = 'none';
-  document.getElementById('admin-settings-screen').style.display = 'flex';
-  loadAdminSettingsToUI();
-}
 
 function switchTab(name) {
   ['design','text','calc','layout'].forEach(t => {
