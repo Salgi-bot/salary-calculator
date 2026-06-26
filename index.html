@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>근로계약 및 퇴직금 산출기 v3.5</title>
+<title>근로계약 및 퇴직금 산출기 v3.6</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -508,7 +508,7 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
 <header>
   <div class="header-title">
     <h1>근로계약 및 퇴직금 산출기</h1>
-    <span class="ver">v3.5 BOSS</span>
+    <span class="ver">v3.6 BOSS</span>
   </div>
   <div class="header-actions">
     <button class="hbtn-admin" onclick="openAdmin()" title="관리자 설정">⚙️</button>
@@ -525,7 +525,7 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
     <div style="background:var(--accent);color:#fff;padding:20px 28px;display:flex;align-items:center;justify-content:space-between">
       <div>
         <div style="font-size:18px;font-weight:700">사용 설명서</div>
-        <div style="font-size:12px;opacity:.75;margin-top:2px">근로계약 및 퇴직금 산출기 v3.5</div>
+        <div style="font-size:12px;opacity:.75;margin-top:2px">근로계약 및 퇴직금 산출기 v3.6 (2026-06-26)</div>
       </div>
       <button onclick="closeHelp()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:14px">✕ 닫기</button>
     </div>
@@ -727,10 +727,10 @@ input.error { border-color: var(--red) !important; background: var(--red-bg); }
               <input type="text" id="txt-title" value="근로계약 및 퇴직금 산출기">
             </div>
             <div class="arow"><label>버전 뱃지</label>
-              <input type="text" id="txt-ver" value="v3.5 BOSS">
+              <input type="text" id="txt-ver" value="v3.6 BOSS">
             </div>
             <div class="arow"><label>PDF 워터마크</label>
-              <input type="text" id="txt-watermark" value="계산 엔진: v3.5 Boss Edition">
+              <input type="text" id="txt-watermark" value="계산 엔진: v3.6 Boss Edition">
             </div>
           </div>
           <div class="agroup">
@@ -1038,6 +1038,23 @@ function getYMD(start, end) {
   }
   while (m < 0) { y -= 1; m += 12; }
   return `${y}년 ${m}개월 ${d}일`;
+}
+
+// 계산 엔진과 동일한 달력월 기준 근무기간 표기
+// (부분달은 실근무 일수, 나머지는 만월 개월 수 — getYMD의 응당일 방식과 달리 산출표와 일치)
+function buildPeriodStr(segResults) {
+  let full = 0;
+  const parts = [];
+  (segResults || []).forEach(seg => {
+    (seg.monthRows || []).forEach(r => {
+      if (r.type === 'full') full += r.count;
+      else parts.push(`${r.ym} ${r.worked}일`);
+    });
+  });
+  const bits = [];
+  if (full > 0) bits.push(`만근 ${full}개월`);
+  if (parts.length) bits.push(`부분 ${parts.join(', ')}`);
+  return bits.length ? bits.join(' + ') : '0일';
 }
 
 function autoDate(el, isStart) {
@@ -1425,7 +1442,7 @@ function renderResult(data) {
     <div class="res-info-grid">
       <div class="res-kv"><span class="k">당사자</span><span class="v name">${name}</span></div>
       <div class="res-kv"><span class="k">계약 기간</span><span class="v" style="font-size:12px">${fmtDate(contractStart)} ~ ${fmtDate(contractEnd)}</span></div>
-      <div class="res-kv"><span class="k">총 기간</span><span class="v" style="font-size:12px">${ymdStr} / ${totalDays}일</span></div>
+      <div class="res-kv"><span class="k">총 기간</span><span class="v" style="font-size:12px">${buildPeriodStr(segResults)} / 총 ${totalDays}일</span></div>
       <div class="res-kv"><span class="k">책정 연봉</span><span class="v">${n(salary)}원</span></div>
     </div>
   </div>`;
@@ -1491,7 +1508,7 @@ function buildTextResult(data) {
   let t = '';
   t += `■ 기본 계약 정보\n`;
   t += `- 계약 당사자: ${name}\n`;
-  t += `- 계약 기간: ${fmtDate(contractStart)} ~ ${fmtDate(contractEnd)} (${ymdStr})\n`;
+  t += `- 계약 기간: ${fmtDate(contractStart)} ~ ${fmtDate(contractEnd)} (${buildPeriodStr(segResults)})\n`;
   t += `- 책정 연봉: ${n(salary)}원\n\n`;
   t += `■ 금액 산출 내역\n${'='.repeat(60)}\n`;
 
@@ -1510,11 +1527,11 @@ function buildTextResult(data) {
     t += `${'='.repeat(60)}\n`;
   });
 
-  t += `\n💰 최종 정산 결과 (총 기간: ${ymdStr} / ${totalDays}일)\n`;
+  t += `\n💰 최종 정산 결과 (총 기간: ${buildPeriodStr(segResults)} / 총 ${totalDays}일)\n`;
   t += `- 총 급여 지급 누계액: ${n(totalSalarySum)}원\n`;
   t += `- 최종 총 퇴직금: ${n(totalSevFinal)}원${totalRndDir !== '없음' ? ` (${totalRndUnit >= 1000 ? '1,000원' : totalRndUnit + '원'} ${totalRndDir})` : ''}\n`;
   t += `▶ 총 지급액 합계: ${n(totalSalarySum+totalSevFinal)}원\n`;
-  t += `\n생성 일시: ${new Date().toLocaleString('ko-KR')} | 계산 엔진: v3.5 Boss Edition`;
+  t += `\n생성 일시: ${new Date().toLocaleString('ko-KR')} | 계산 엔진: v3.6 Boss Edition`;
   return t;
 }
 
@@ -1600,14 +1617,14 @@ function printResult() {
 </style>
 </head><body>
 <h1>근로계약 및 퇴직금 산출 내역</h1>
-<div class="meta">생성: ${new Date().toLocaleString('ko-KR')} &nbsp;|&nbsp; 계산 엔진 v3.5</div>
+<div class="meta">생성: ${new Date().toLocaleString('ko-KR')} &nbsp;|&nbsp; 계산 엔진 v3.6 (2026-06-26)</div>
 
 <div class="section-title">■ 기본 계약 정보</div>
 <div class="info-grid">
   <div class="info-row"><span class="lbl">계약 당사자</span><span class="val">${d.name}</span></div>
   <div class="info-row"><span class="lbl">책정 연봉</span><span class="val">${n(d.salary)}원</span></div>
   <div class="info-row"><span class="lbl">계약 기간</span><span class="val">${fmtDate(d.contractStart)} ~ ${fmtDate(d.contractEnd)}</span></div>
-  <div class="info-row"><span class="lbl">총 근무 기간</span><span class="val">${d.ymdStr} / ${d.totalDays}일</span></div>
+  <div class="info-row"><span class="lbl">총 근무 기간</span><span class="val">${buildPeriodStr(d.segResults)} / 총 ${d.totalDays}일</span></div>
 </div>
 
 <div class="section-title">■ 구간별 산출 내역</div>
@@ -1680,7 +1697,7 @@ function exportJSON() {
   if (!latestResultData) { toast('먼저 산출을 실행해주세요.'); return; }
   const d = latestResultData;
   const payload = {
-    _version: 'v3.5',
+    _version: 'v3.6',
     _exported: new Date().toLocaleString('ko-KR'),
     name: d.name,
     contractStart: fmtDate6(d.contractStart),
@@ -1842,8 +1859,8 @@ const ADMIN_DEFAULTS = {
   borderRadius:   10,
   baseFontSize:   14,
   txtTitle:       '근로계약 및 퇴직금 산출기',
-  txtVer:         'v3.5 BOSS',
-  txtWatermark:   '계산 엔진: v3.5 Boss Edition',
+  txtVer:         'v3.6 BOSS',
+  txtWatermark:   '계산 엔진: v3.6 Boss Edition',
   txtCard1:       '📋 기본 계약 정보',
   txtCard2:       '⚙️ 기간별 조건',
   txtRunBtn:      '▶ 정밀 산출 실행',
